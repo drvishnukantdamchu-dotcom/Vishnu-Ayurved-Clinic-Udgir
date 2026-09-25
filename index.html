@@ -79,6 +79,8 @@ const enBtn=document.getElementById('enBtn'),mrBtn=document.getElementById('mrBt
 const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 document.getElementById('appointmentForm').addEventListener('submit',function(e){e.preventDefault();const v=id=>document.getElementById(id).value.trim();const lines=['Namaskar Doctor, I would like to request an appointment.','','Patient: '+v('name'),'Mobile: '+v('phone'),v('age')?'Age: '+v('age'):'','Branch: '+v('branch'),v('date')?'Preferred date: '+v('date'):'',v('time')?'Preferred time: '+v('time'):'',v('concern')?'Main concern: '+v('concern'):'',v('message')?'Additional details: '+v('message'):'','','Please confirm the appointment. Thank you.'].filter(Boolean);window.open('https://wa.me/919518355385?text='+encodeURIComponent(lines.join('\n')),'_blank')});
 </script>
+
+</body>
 <!-- ===== NEW FEATURES START ===== -->
 <style>
 .ritu{margin:26px auto;padding:22px 24px;border-radius:22px;background:linear-gradient(135deg,#0b3b27,#17653f);color:#fff;border:1px solid rgba(241,216,137,.4)}
@@ -169,5 +171,4 @@ document.getElementById('appointmentForm').addEventListener('submit',function(e)
 })();
 </script>
 <!-- ===== NEW FEATURES END ===== -->
-
-</body></html>
+</html>
