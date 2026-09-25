@@ -30,6 +30,7 @@ body:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-2;bac
 @media(max-width:640px){.topbrand img{max-height:115px}.brand strong{font-size:1.05rem}.brand small{font-size:.66rem}.lang{display:none}.hero{padding:52px 0 45px}.hero h1{font-size:3.1rem}.doctor-frame img{height:440px}.doctor-badge{left:18px;right:18px;bottom:18px}.float-badge{display:none}.strip-grid,.cards,.pk,.branches,.gallery,.fields,.footer-grid,.support-grid,.stat-row{grid-template-columns:1fr}.strip-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.12)}.section{padding:64px 0}.wa-float{display:none}.mobile-bar{display:grid;grid-template-columns:repeat(3,1fr);position:fixed;left:0;right:0;bottom:0;z-index:1300;background:#fff;border-top:1px solid #dce4df;box-shadow:0 -10px 28px rgba(0,0,0,.08)}.mobile-bar a{padding:10px 5px;text-align:center;font-size:.72rem;font-weight:700;color:var(--g)}.mobile-bar a:nth-child(2){background:#22b85b;color:#fff}.mobile-bar i{display:block;font-size:1.05rem}.footer{padding-bottom:105px}}
 </style>
 </head>
+
 <body>
 <div class="topline"></div>
 <div class="topbrand"><div class="container"><img src="images/vishnu-ayurved-header.jpg" alt="Vishnu Ayurved Clinic Udgir branded header"></div></div>
@@ -78,4 +79,95 @@ const enBtn=document.getElementById('enBtn'),mrBtn=document.getElementById('mrBt
 const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')}),{threshold:.12});document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 document.getElementById('appointmentForm').addEventListener('submit',function(e){e.preventDefault();const v=id=>document.getElementById(id).value.trim();const lines=['Namaskar Doctor, I would like to request an appointment.','','Patient: '+v('name'),'Mobile: '+v('phone'),v('age')?'Age: '+v('age'):'','Branch: '+v('branch'),v('date')?'Preferred date: '+v('date'):'',v('time')?'Preferred time: '+v('time'):'',v('concern')?'Main concern: '+v('concern'):'',v('message')?'Additional details: '+v('message'):'','','Please confirm the appointment. Thank you.'].filter(Boolean);window.open('https://wa.me/919518355385?text='+encodeURIComponent(lines.join('\n')),'_blank')});
 </script>
+<!-- ===== NEW FEATURES START ===== -->
+<style>
+.ritu{margin:26px auto;padding:22px 24px;border-radius:22px;background:linear-gradient(135deg,#0b3b27,#17653f);color:#fff;border:1px solid rgba(241,216,137,.4)}
+.ritu h3{margin:0 0 6px;font-family:'Cormorant Garamond',serif;font-size:1.7rem;color:#f1d889}
+.ritu p{margin:4px 0;font-size:.92rem}
+.live-status{display:grid;gap:10px;margin:20px 0}
+.ls{padding:12px 16px;border-radius:14px;background:#fff;border:1px solid #eadfca;font-size:.92rem}
+.ls .dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:8px}
+.ls.open .dot{background:#22b35e;box-shadow:0 0 0 4px rgba(34,179,94,.2)}
+.ls.closed .dot{background:#d9534f}
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MedicalClinic",
+  "name": "Vishnu Ayurved Clinic & Panchakarma Center",
+  "medicalSpecialty": "Ayurveda",
+  "telephone": "+91-9518355385",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "Dolphin Statue, Chhatrapati Shahu Maharaj Chowk, Shelhal Road",
+    "addressLocality": "Udgir",
+    "addressRegion": "Maharashtra",
+    "addressCountry": "IN"
+  },
+  "url": "https://drvishnukantdamchu-dotcom.github.io/Vishnu-Ayurved-Clinic-Udgir/"
+}
+</script>
+
+<script>
+(function(){
+  function nowIST(){ return new Date(new Date().toLocaleString("en-US",{timeZone:"Asia/Kolkata"})); }
+
+  /* ---------- 1. RITU BANNER ---------- */
+  var ritus = [
+    {s:115,  en:"Shishira Ritu", mr:"शिशिर ऋतू", tip:"Warm, unctuous, freshly cooked food; Abhyanga and mild exercise are beneficial.", tipMr:"उष्ण, स्निग्ध, ताजे अन्न; अभ्यंग व व्यायाम हितकर."},
+    {s:315,  en:"Vasanta Ritu",  mr:"वसंत ऋतू",  tip:"Light, dry food; avoid heavy, sweet food and day sleep.", tipMr:"हलका, रूक्ष आहार; दिवसा झोप टाळा."},
+    {s:515,  en:"Grishma Ritu",  mr:"ग्रीष्म ऋतू", tip:"Cooling, liquid, sweet diet; avoid strong sun and heavy exercise.", tipMr:"शीत, द्रव, मधुर आहार; कडक ऊन टाळा."},
+    {s:715,  en:"Varsha Ritu",   mr:"वर्षा ऋतू",  tip:"Boiled water and light, easily digestible food.", tipMr:"उकळलेले पाणी व पचायला हलके अन्न."},
+    {s:915,  en:"Sharad Ritu",   mr:"शरद ऋतू",   tip:"Madhura, tikta, kashaya rasa; avoid curd, excess spicy food and sun.", tipMr:"मधुर, तिक्त, कषाय रस; दही, तिखट व ऊन टाळा."},
+    {s:1115, en:"Hemanta Ritu",  mr:"हेमंत ऋतू",  tip:"Nourishing, unctuous food; Abhyanga and exercise; do not skip meals.", tipMr:"पौष्टिक, स्निग्ध आहार; अभ्यंग व व्यायाम."}
+  ];
+  var d = nowIST(), today = (d.getMonth()+1)*100 + d.getDate();
+  var cur = ritus[5];
+  ritus.forEach(function(r){ if (today >= r.s) cur = r; });
+
+  var banner = document.createElement("div");
+  banner.className = "container";
+  banner.innerHTML = '<div class="ritu"><h3>Current Season: ' + cur.en + ' | <span class="mr">' + cur.mr + '</span></h3>' +
+    '<p>' + cur.tip + '</p><p class="mr">' + cur.tipMr + '</p>' +
+    '<p style="opacity:.75;font-size:.8rem">General seasonal guidance. Personal advice only after consultation.</p></div>';
+  var doctor = document.getElementById("doctor");
+  if (doctor) doctor.parentNode.insertBefore(banner, doctor);
+
+  /* ---------- 2. LIVE OPEN / CLOSED STATUS ---------- */
+  var branches = [
+    {name:"Main Branch – Dolphin Statue", slots:[[7,0,9,0],[17,0,20,0]]},
+    {name:"Krantinagar – Nideban Road",  slots:[[13,0,15,0],[20,0,22,0]]}
+  ];
+  function fmt(h,m){ return (h%12||12) + ":" + String(m).padStart(2,"0") + (h>=12?" PM":" AM"); }
+
+  var box = document.createElement("div");
+  box.className = "live-status";
+  var branchCards = document.querySelector(".branches");
+  if (branchCards) branchCards.parentNode.insertBefore(box, branchCards);
+
+  function showStatus(){
+    var t = nowIST(), mins = t.getHours()*60 + t.getMinutes(), html = "";
+    branches.forEach(function(b){
+      var open = null, next = null;
+      b.slots.forEach(function(s){
+        var st = s[0]*60+s[1], en = s[2]*60+s[3];
+        if (mins >= st && mins < en) open = s;
+        else if (mins < st && !next) next = s;
+      });
+      if (open) {
+        html += '<div class="ls open"><span class="dot"></span><b>' + b.name + '</b> – Open now till ' + fmt(open[2],open[3]) + ' <span class="mr">(आता सुरू आहे)</span></div>';
+      } else {
+        var n = next || b.slots[0];
+        html += '<div class="ls closed"><span class="dot"></span><b>' + b.name + '</b> – Closed now. Opens ' + (next ? "today" : "tomorrow") + ' at ' + fmt(n[0],n[1]) + ' <span class="mr">(सध्या बंद)</span></div>';
+      }
+    });
+    box.innerHTML = html;
+  }
+  showStatus();
+  setInterval(showStatus, 60000);
+})();
+</script>
+<!-- ===== NEW FEATURES END ===== -->
+
 </body></html>
