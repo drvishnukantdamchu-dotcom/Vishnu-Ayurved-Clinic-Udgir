@@ -1,0 +1,32 @@
+name: Force doctor image refresh
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-doctor-image:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create cache-busted doctor image and update HTML
+        run: |
+          cp images/doctor-vishnukant-jadhav-hero.webp images/doctor-vishnukant-jadhav-hero-v2.webp
+          sed -i 's#images/doctor-vishnukant-jadhav-hero.webp#images/doctor-vishnukant-jadhav-hero-v2.webp?v=20260925-2240#g' index.html
+          rm -f .github/workflows/force-doctor-image-refresh.yml
+
+      - name: Commit update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Force refresh doctor portrait with cache-busted filename"
+          git push
