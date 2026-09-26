@@ -1,389 +1,383 @@
-// Progressive enhancements for Vishnu Ayurved Clinic appointment + telemedicine flow.
+// Vishnu Ayurved Clinic – stable booking, telemedicine and accessibility enhancements
 (()=>{
+  'use strict';
   const CLINIC_PHONE='919518355385';
-  const DISPLAY_PHONE='95183 55385';
+  const DOCTOR_IMAGE='images/doctor-sharp-20260926.webp?v=3';
 
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
-    document.documentElement.classList.add('js-motion');
+  function ready(fn){
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',fn,{once:true});
+    else fn();
   }
 
-  // ---------- Existing navigation / gallery / share enhancements ----------
-  const menu=document.getElementById('menu'), nav=document.getElementById('navlinks');
-  document.addEventListener('keydown',e=>{
-    if(e.key==='Escape' && nav && menu){
-      nav.classList.remove('open');
-      menu.setAttribute('aria-expanded','false');
+  ready(()=>{
+    const doctorImg=document.querySelector('.doctor-frame img');
+    if(doctorImg){
+      doctorImg.src=DOCTOR_IMAGE;
+      doctorImg.removeAttribute('srcset');
+      doctorImg.decoding='async';
+      doctorImg.loading='eager';
+      doctorImg.style.filter='none';
+      doctorImg.style.imageRendering='auto';
+      doctorImg.style.objectFit='contain';
+      doctorImg.style.objectPosition='center bottom';
     }
-  });
 
-  const dialog=document.getElementById('photo-viewer');
-  if(dialog){
-    document.querySelectorAll('.gallery figure').forEach(figure=>{
-      const img=figure.querySelector('img');
-      if(!img || img.closest('.photo-button')) return;
-      const button=document.createElement('button');
-      button.type='button';
-      button.className='photo-button';
-      button.setAttribute('aria-label','Enlarge: '+img.alt);
-      img.before(button);
-      button.append(img);
-      button.onclick=()=>{
-        const dimg=dialog.querySelector('img');
-        dimg.src=img.src; dimg.alt=img.alt;
-        dialog.querySelector('p').textContent=figure.querySelector('figcaption')?.textContent||'';
-        dialog.showModal();
-      };
+    const menu=document.getElementById('menu');
+    const nav=document.getElementById('navlinks');
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape' && nav && menu){
+        nav.classList.remove('open');
+        menu.setAttribute('aria-expanded','false');
+      }
     });
-    dialog.querySelector('button')?.addEventListener('click',()=>dialog.close());
-    dialog.addEventListener('click',e=>{if(e.target===dialog) dialog.close();});
-  }
 
-  const shareBtn=document.getElementById('share-site');
-  if(shareBtn){
-    shareBtn.onclick=async()=>{
-      const url='https://drvishnukantdamchu-dotcom.github.io/Vishnu-Ayurved-Clinic-Udgir/';
-      const status=document.getElementById('share-status');
-      try{
-        if(navigator.share) await navigator.share({title:'Vishnu Ayurved Clinic, Udgir',url});
-        else{
-          await navigator.clipboard.writeText(url);
-          if(status) status.textContent='Website link copied.';
+    const shareBtn=document.getElementById('share-site');
+    if(shareBtn){
+      shareBtn.onclick=async()=>{
+        const url='https://drvishnukantdamchu-dotcom.github.io/Vishnu-Ayurved-Clinic-Udgir/';
+        const status=document.getElementById('share-status');
+        try{
+          if(navigator.share) await navigator.share({title:'Vishnu Ayurved Clinic, Udgir',url});
+          else if(navigator.clipboard){
+            await navigator.clipboard.writeText(url);
+            if(status) status.textContent='Website link copied.';
+          }
+        }catch(err){
+          if(err && err.name!=='AbortError' && status) status.textContent=url;
         }
-      }catch(e){
-        if(e.name!=='AbortError' && status) status.textContent='Share this website: '+url;
-      }
-    };
-  }
-
-  try{ if(typeof setLang==='function') setLang(localStorage.getItem('clinic-language')==='mr'?'mr':'en'); }
-  catch(e){ if(typeof setLang==='function') setLang('en'); }
-
-  // ---------- Extra styles ----------
-  const style=document.createElement('style');
-  style.textContent=`
-    .booking-upgrade{margin:26px 0 30px;padding:26px;border:1px solid rgba(213,168,63,.35);border-radius:26px;background:linear-gradient(135deg,#fffdf7,#f1f8f3);box-shadow:0 14px 36px rgba(11,59,39,.07)}
-    .booking-upgrade h3{margin:0 0 8px;color:var(--g);font-family:'Cormorant Garamond',serif;font-size:2rem;line-height:1.05}
-    .booking-upgrade p{margin:6px 0;color:var(--muted)}
-    .booking-badges{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-    .booking-badge{padding:9px 12px;border-radius:999px;background:#fff;border:1px solid #e6dbc3;font-size:.82rem;font-weight:700;color:var(--g)}
-    .booking-badge strong{color:#9d6f18}
-    .tele-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:stretch}
-    .tele-box{padding:20px;border-radius:20px;background:linear-gradient(145deg,#0a3a26,#11623c);color:#fff}
-    .tele-box h4{font-size:1.08rem;margin:0 0 7px}.tele-box p{color:#dfeae4;font-size:.88rem}.tele-box .btn{margin-top:8px}
-    .assist-box{padding:20px;border-radius:20px;background:#fff;border:1px solid #eadfca}
-    .assist-box h4{margin:0 0 5px;color:var(--g)}
-    .assist-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:13px}
-    .assist-actions .btn{padding:12px 8px;font-size:.83rem;text-align:center}
-    .assist-note{margin-top:10px;padding:11px 13px;border-radius:12px;background:#fff8e8;color:#6e5b34;font-size:.82rem}
-    .slot-guide{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:16px 0}
-    .slot-guide div{padding:14px 15px;border-radius:15px;background:#fff;border:1px solid #e6dbc3}
-    .slot-guide strong{display:block;color:var(--g)}
-    .slot-guide small{color:var(--muted)}
-    .confirm-note{margin-top:14px;padding:13px 15px;border-radius:14px;background:#edf7f0;border-left:4px solid #1fa956;color:#355746;font-size:.86rem}
-    .form .fields label>span{display:block;font-size:.78rem;font-weight:700;color:#44554c;margin:0 0 5px}
-    .form .fields select,.form .fields input,.form .fields textarea{min-height:48px}
-    .tele-consent{grid-column:1/-1;display:none!important;padding:12px 14px;border:1px solid #e5dcc7;border-radius:14px;background:#fffaf0}
-    .tele-consent.show{display:flex!important;gap:10px;align-items:flex-start}
-    .tele-consent input{width:auto!important;min-height:auto!important;margin-top:4px}
-    .tele-help{grid-column:1/-1;padding:10px 13px;border-radius:12px;background:#f4f8f5;color:#526159;font-size:.8rem}
-    .request-summary{display:none;margin:12px 0 0;padding:13px 14px;border-radius:14px;background:#f7fbf8;border:1px solid #dceae1;font-size:.84rem}
-    .request-summary.show{display:block}
-    .new-schedule{display:grid;gap:10px;margin:20px 0 28px}
-    .new-schedule .ls{padding:13px 16px;border-radius:14px;background:#fff;border:1px solid #eadfca;font-size:.9rem}
-    .new-schedule .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:#22b35e;box-shadow:0 0 0 4px rgba(34,179,94,.16)}
-    .low-literacy-banner{position:relative;overflow:hidden}
-    .low-literacy-banner:after{content:'☎';position:absolute;right:18px;bottom:-20px;font-size:7rem;opacity:.05;color:var(--g)}
-    @media(max-width:800px){.tele-grid{grid-template-columns:1fr}.assist-actions{grid-template-columns:1fr}.slot-guide{grid-template-columns:1fr}.booking-upgrade{padding:20px}}
-  `;
-  document.head.appendChild(style);
-
-  // ---------- Normalize visible clinic timings ----------
-  document.querySelectorAll('.branch').forEach(card=>{
-    const title=(card.querySelector('h3')?.textContent||'').toLowerCase();
-    const clockRow=[...card.querySelectorAll('.row')].find(r=>r.querySelector('.fa-clock'));
-    if(!clockRow) return;
-    const span=clockRow.querySelector('span');
-    if(!span) return;
-    if(title.includes('main') || title.includes('dolphin')){
-      span.innerHTML='Morning 7:00–9:00 AM<br>Evening 5:00–9:00 PM';
-    }else{
-      span.innerHTML='Preferred booking windows: 7:00–9:00 AM & 5:00–9:00 PM<br><small>Flexible visit possible by prior confirmation.</small>';
+      };
     }
-  });
-  document.querySelectorAll('.footer-grid>div').forEach(col=>{
-    const h=col.querySelector('h4')?.textContent?.toLowerCase()||'';
-    const ps=col.querySelectorAll('p');
-    if(h.includes('main') && ps[1]) ps[1].textContent='7–9 AM & 5–9 PM';
-    if(h.includes('krantinagar') && ps[1]) ps[1].textContent='Preferred 7–9 AM & 5–9 PM • Flexible by confirmation';
-  });
 
-  // Remove older timing widget generated by inline legacy code and replace it with clear request windows.
-  document.querySelector('.live-status')?.remove();
-  const branchCards=document.querySelector('.branches');
-  if(branchCards){
-    const schedule=document.createElement('div');
-    schedule.className='new-schedule';
-    schedule.innerHTML=`
-      <div class="ls"><span class="dot"></span><b>Main Branch – Dolphin Statue:</b> booking requests accepted for <b>7:00–9:00 AM</b> or <b>5:00–9:00 PM</b>.</div>
-      <div class="ls"><span class="dot"></span><b>Krantinagar / Home Branch:</b> same preferred windows; flexible timing may be offered after doctor confirmation.</div>
+    const dialog=document.getElementById('photo-viewer');
+    if(dialog){
+      document.querySelectorAll('.gallery figure').forEach(figure=>{
+        const img=figure.querySelector('img');
+        if(!img || img.closest('.photo-button')) return;
+        const button=document.createElement('button');
+        button.type='button';
+        button.className='photo-button';
+        button.setAttribute('aria-label','Enlarge: '+(img.alt||'clinic photo'));
+        img.before(button);
+        button.append(img);
+        button.addEventListener('click',()=>{
+          const big=dialog.querySelector('img');
+          if(big){big.src=img.src;big.alt=img.alt||'';}
+          const p=dialog.querySelector('p');
+          if(p) p.textContent=figure.querySelector('figcaption')?.textContent||'';
+          if(typeof dialog.showModal==='function') dialog.showModal();
+        });
+      });
+      dialog.querySelector('button')?.addEventListener('click',()=>dialog.close());
+      dialog.addEventListener('click',e=>{if(e.target===dialog) dialog.close();});
+    }
+
+    try{
+      if(typeof setLang==='function') setLang(localStorage.getItem('clinic-language')==='mr'?'mr':'en');
+    }catch(_){ if(typeof setLang==='function') setLang('en'); }
+
+    const style=document.createElement('style');
+    style.textContent=`
+      .booking-upgrade{margin:28px 0 30px;padding:24px;border:1px solid rgba(213,168,63,.38);border-radius:24px;background:linear-gradient(135deg,#fffdf7,#eef8f1);box-shadow:0 14px 36px rgba(11,59,39,.08)}
+      .tele-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:18px}
+      .tele-box,.assist-box{border-radius:20px;padding:20px}
+      .tele-box{background:linear-gradient(145deg,#0a3a26,#11623c);color:#fff}
+      .tele-box h3,.assist-box h3{margin:0 0 7px;font-size:1.2rem}
+      .tele-box p{color:#dfeae4;margin:7px 0;font-size:.9rem}
+      .assist-box{background:#fff;border:1px solid #eadfca}
+      .assist-box p{margin:6px 0;color:#5c6861;font-size:.9rem}
+      .assist-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+      .assist-actions .btn{min-height:48px;padding:10px 8px;text-align:center}
+      .process-note{margin-top:16px;padding:13px 15px;border-radius:14px;background:#edf7f0;border-left:4px solid #1fa956;color:#355746;font-size:.87rem}
+      .new-schedule{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0 28px}
+      .new-schedule .slot-info{padding:15px 16px;border-radius:16px;background:#fff;border:1px solid #e7dcc6;box-shadow:0 5px 16px rgba(11,59,39,.04)}
+      .slot-info strong{display:block;color:var(--g);font-size:.98rem}.slot-info small{color:var(--muted)}
+      .form .fields label>span{display:block;font-size:.78rem;font-weight:700;color:#44554c;margin:0 0 5px}
+      .form .fields select,.form .fields input,.form .fields textarea{width:100%;min-height:48px}
+      .slot-picker{grid-column:1/-1}
+      .slot-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+      .slot-choice{border:2px solid #dfe7e2;background:#fff;border-radius:16px;padding:15px;cursor:pointer;text-align:left;transition:.18s;font:inherit;color:#33443b}
+      .slot-choice:hover{border-color:#83af95;transform:translateY(-1px)}
+      .slot-choice.active{border-color:#17653f;background:#edf7f0;box-shadow:0 0 0 3px rgba(23,101,63,.10)}
+      .slot-choice b{display:block;color:#0b3b27;font-size:1rem}.slot-choice small{color:#68736d}
+      .tele-consent{grid-column:1/-1;display:none;padding:12px 14px;border:1px solid #e5dcc7;border-radius:14px;background:#fffaf0;gap:10px;align-items:flex-start}
+      .tele-consent.show{display:flex}.tele-consent input{width:auto!important;min-height:auto!important;margin-top:4px}
+      .request-summary{grid-column:1/-1;display:none;padding:13px 14px;border-radius:14px;background:#f7fbf8;border:1px solid #dceae1;font-size:.84rem}
+      .request-summary.show{display:block}
+      .help-line{grid-column:1/-1;padding:10px 13px;border-radius:12px;background:#fff8e8;color:#6c5a34;font-size:.8rem}
+      @media(max-width:800px){.tele-grid,.new-schedule,.slot-buttons{grid-template-columns:1fr}.assist-actions{grid-template-columns:1fr}.booking-upgrade{padding:18px}}
     `;
-    branchCards.parentNode.insertBefore(schedule,branchCards);
-  }
+    document.head.appendChild(style);
 
-  // ---------- Telemedicine + simple help section ----------
-  const contactSection=document.getElementById('contact');
-  if(contactSection){
-    const container=contactSection.querySelector('.container');
-    const contactGrid=contactSection.querySelector('.contact');
-    if(container && contactGrid){
-      const upgrade=document.createElement('div');
-      upgrade.className='booking-upgrade reveal show';
-      upgrade.innerHTML=`
-        <div class="tele-grid">
-          <div class="tele-box">
-            <h4>📱 Telemedicine / Online Ayurvedic Consultation</h4>
-            <p>Suitable for selected new consultations, follow-up, report review, diet-lifestyle guidance and preliminary Panchakarma suitability discussion. In-person examination may still be advised when clinically necessary.</p>
-            <div class="booking-badges"><span class="booking-badge">Morning <strong>7–9 AM</strong></span><span class="booking-badge">Evening <strong>5–9 PM</strong></span></div>
-            <button type="button" class="btn btn-gold" id="bookTelemedicine"><i class="fa-solid fa-video"></i> Book Telemedicine</button>
-            <p style="font-size:.76rem;margin-top:10px">Not for emergencies. For urgent or severe symptoms, seek the nearest appropriate emergency medical service.</p>
-          </div>
-          <div class="assist-box low-literacy-banner">
-            <h4 class="mr">फॉर्म भरता येत नाही? काही हरकत नाही.</h4>
-            <p class="mr">एका बटणावर फोन करा किंवा WhatsApp उघडा. आम्ही अपॉइंटमेंटबद्दल मार्गदर्शन करू.</p>
-            <div class="assist-actions">
-              <a class="btn btn-green" href="tel:+${CLINIC_PHONE}"><i class="fa-solid fa-phone"></i> 📞 फोन करा</a>
-              <a class="btn btn-wa" href="https://wa.me/${CLINIC_PHONE}?text=${encodeURIComponent('नमस्कार डॉक्टर, मला अपॉइंटमेंटबद्दल मदत हवी आहे. कृपया मला मार्गदर्शन करा.') }" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
-              <button type="button" class="btn btn-outline" id="listenHelp"><i class="fa-solid fa-volume-high"></i> 🔊 ऐका</button>
-            </div>
-            <div class="assist-note mr">WhatsApp उघडल्यानंतर तुम्ही लिहिण्याऐवजी <b>voice note</b> देखील पाठवू शकता.</div>
-          </div>
-        </div>
-        <div class="slot-guide">
-          <div><strong>🌅 Morning Slot</strong><small>7:00 AM – 9:00 AM • Main / Krantinagar / Telemedicine</small></div>
-          <div><strong>🌆 Evening Slot</strong><small>5:00 PM – 9:00 PM • Main / Krantinagar / Telemedicine</small></div>
-        </div>
-        <div class="confirm-note"><b>Appointment process:</b> Patient sends the request on WhatsApp → Doctor checks branch/date/slot → Doctor replies <b>✅ CONFIRMED</b> or suggests another slot. A requested slot is not treated as confirmed until the clinic replies.</div>
-      `;
-      container.insertBefore(upgrade,contactGrid);
-    }
-  }
-
-  // ---------- Rebuild form to remove legacy submit handler ----------
-  const oldForm=document.getElementById('appointmentForm');
-  if(oldForm){
-    const form=oldForm.cloneNode(true);
-    oldForm.replaceWith(form);
-    const fields=form.querySelector('.fields');
-
-    if(fields){
-      // Consultation type and patient type before branch/date fields.
-      const branchLabel=form.querySelector('label[for="branch"]');
-      branchLabel?.insertAdjacentHTML('beforebegin',`
-        <label for="consultType"><span>Consultation type *</span>
-          <select id="consultType" required>
-            <option value="">Select consultation type *</option>
-            <option>Clinic Visit</option>
-            <option>Telemedicine / Video Consultation</option>
-            <option>Follow-up Consultation</option>
-            <option>Panchakarma Consultation</option>
-          </select>
-        </label>
-        <label for="patientType"><span>Patient type *</span>
-          <select id="patientType" required>
-            <option value="">Select patient type *</option>
-            <option>New Patient</option>
-            <option>Existing / Follow-up Patient</option>
-          </select>
-        </label>
-      `);
-
-      // Branch options.
-      const branch=form.querySelector('#branch');
-      if(branch){
-        branch.innerHTML=`
-          <option value="">Select branch *</option>
-          <option value="Main Branch – Dolphin Statue / Shelhal Road">Main Branch – Dolphin Statue / Shelhal Road</option>
-          <option value="Krantinagar / Nideban Road (Home Branch)">Krantinagar / Nideban Road (Home Branch)</option>
-          <option value="Online / Telemedicine">Online / Telemedicine</option>
-        `;
-      }
-
-      // Replace free clock-time input with simple two-slot preference.
-      const timeLabel=form.querySelector('label[for="time"]');
-      if(timeLabel){
-        timeLabel.setAttribute('for','slot');
-        timeLabel.innerHTML=`<span>Preferred slot *</span>
-          <select id="slot" required>
-            <option value="">Select slot *</option>
-            <option value="Morning 7:00–9:00 AM">🌅 Morning 7:00–9:00 AM</option>
-            <option value="Evening 5:00–9:00 PM">🌆 Evening 5:00–9:00 PM</option>
-          </select>`;
-      }
-
-      // Complaint category + duration before brief complaint text.
-      const concernLabel=form.querySelector('label[for="concern"]');
-      concernLabel?.insertAdjacentHTML('beforebegin',`
-        <label for="concernCategory"><span>Main health concern *</span>
-          <select id="concernCategory" required>
-            <option value="">Select main concern *</option>
-            <option>Joint pain / Arthritis / Stiffness</option>
-            <option>Back / Neck pain / Sciatica</option>
-            <option>Skin problem</option>
-            <option>Hair problem</option>
-            <option>Digestive complaint</option>
-            <option>Piles / Ano-rectal complaint</option>
-            <option>Weight management</option>
-            <option>Diabetes / Metabolic health</option>
-            <option>BP-related consultation</option>
-            <option>Women's health / Menstrual complaint</option>
-            <option>PCOS / Preconception / Garbhasanskar</option>
-            <option>Fertility consultation</option>
-            <option>Male sexual health</option>
-            <option>Stress / Sleep / Headache</option>
-            <option>Panchakarma consultation</option>
-            <option>General Ayurvedic consultation</option>
-            <option>Other</option>
-          </select>
-        </label>
-        <label for="duration"><span>Complaint duration</span><input id="duration" type="text" placeholder="e.g. 10 days / 6 months"></label>
-      `);
-      if(concernLabel){
-        const span=concernLabel.querySelector('span');
-        if(span) span.textContent='Brief complaint / symptoms';
-        const input=concernLabel.querySelector('#concern');
-        if(input) input.placeholder='Describe the main problem in 1–2 lines';
-      }
-
-      // Telemedicine consent and guidance.
-      fields.insertAdjacentHTML('beforeend',`
-        <div class="tele-help">📄 If you have previous prescriptions, reports or medicine photos, you can attach them in WhatsApp after sending the booking request.</div>
-        <label class="tele-consent" id="teleConsentWrap" for="teleConsent">
-          <input id="teleConsent" type="checkbox">
-          <span>I consent to an online consultation and understand that the doctor may advise an in-person examination when required.</span>
-        </label>
-        <div class="request-summary" id="requestSummary"></div>
-      `);
-    }
-
-    const date=form.querySelector('#date');
-    if(date){
-      date.required=true;
-      date.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-    }
-
-    const consultType=form.querySelector('#consultType');
-    const branch=form.querySelector('#branch');
-    const slot=form.querySelector('#slot');
-    const consentWrap=form.querySelector('#teleConsentWrap');
-    const consent=form.querySelector('#teleConsent');
-    const summary=form.querySelector('#requestSummary');
-
-    const updateMode=()=>{
-      const tele=consultType?.value==='Telemedicine / Video Consultation';
-      if(tele){
-        if(branch) branch.value='Online / Telemedicine';
-        if(branch) branch.disabled=true;
-        consentWrap?.classList.add('show');
-        if(consent) consent.required=true;
+    document.querySelectorAll('.live-status').forEach(el=>el.remove());
+    document.querySelectorAll('.branch').forEach(card=>{
+      const title=(card.querySelector('h3')?.textContent||'').toLowerCase();
+      const clockRow=[...card.querySelectorAll('.row')].find(r=>r.querySelector('.fa-clock'));
+      const span=clockRow?.querySelector('span');
+      if(!span) return;
+      if(title.includes('krantinagar')){
+        span.innerHTML='Preferred: 7:00–9:00 AM & 5:00–9:00 PM<br><small>Other timing may be offered after confirmation.</small>';
       }else{
-        if(branch) branch.disabled=false;
-        consentWrap?.classList.remove('show');
-        if(consent){ consent.required=false; consent.checked=false; }
-        if(branch?.value==='Online / Telemedicine') branch.value='';
+        span.innerHTML='Morning 7:00–9:00 AM<br>Evening 5:00–9:00 PM';
       }
-      updateSummary();
-    };
-
-    const updateSummary=()=>{
-      if(!summary) return;
-      const type=consultType?.value||'—';
-      const br=branch?.value||'—';
-      const sl=slot?.value||'—';
-      const dt=date?.value||'—';
-      summary.innerHTML=`<b>Request preview:</b> ${type} • ${br} • ${dt} • ${sl}<br><small>Final appointment is confirmed only after clinic reply on WhatsApp.</small>`;
-      summary.classList.add('show');
-    };
-
-    consultType?.addEventListener('change',updateMode);
-    branch?.addEventListener('change',()=>{
-      // Home branch can offer an additional flexible option after confirmation.
-      const flexible='Flexible timing – Krantinagar/Home Branch (doctor confirmation required)';
-      const old=[...slot.options].find(o=>o.value===flexible);
-      if(branch.value.includes('Krantinagar')){
-        if(!old){ const o=new Option('🏠 Flexible timing – Home Branch (confirm on WhatsApp)',flexible); slot.add(o); }
-      }else if(old){ old.remove(); }
-      updateSummary();
     });
-    [slot,date].forEach(el=>el?.addEventListener('change',updateSummary));
+    document.querySelectorAll('.footer-grid>div').forEach(col=>{
+      const h=(col.querySelector('h4')?.textContent||'').toLowerCase();
+      const ps=col.querySelectorAll('p');
+      if(h.includes('main') && ps[1]) ps[1].textContent='7–9 AM & 5–9 PM';
+      if(h.includes('krantinagar') && ps[1]) ps[1].textContent='Preferred 7–9 AM & 5–9 PM • Flexible after confirmation';
+    });
 
-    // Telemedicine CTA auto-fills and scrolls to form.
-    document.getElementById('bookTelemedicine')?.addEventListener('click',()=>{
-      consultType.value='Telemedicine / Video Consultation';
+    const branches=document.querySelector('.branches');
+    if(branches){
+      const schedule=document.createElement('div');
+      schedule.className='new-schedule';
+      schedule.innerHTML=`
+        <div class="slot-info"><strong>🌅 Morning booking window</strong><small>7:00 AM – 9:00 AM • Clinic / Home Branch / Telemedicine</small></div>
+        <div class="slot-info"><strong>🌆 Evening booking window</strong><small>5:00 PM – 9:00 PM • Clinic / Home Branch / Telemedicine</small></div>`;
+      branches.parentNode.insertBefore(schedule,branches);
+    }
+
+    const contactSection=document.getElementById('contact');
+    if(contactSection){
+      const container=contactSection.querySelector('.container');
+      const contactGrid=contactSection.querySelector('.contact');
+      if(container && contactGrid){
+        const upgrade=document.createElement('div');
+        upgrade.className='booking-upgrade';
+        upgrade.innerHTML=`
+          <div class="tele-grid">
+            <section class="tele-box">
+              <h3>📱 Telemedicine / Online Ayurvedic Consultation</h3>
+              <p>For selected new consultations, follow-up, report review and diet-lifestyle guidance. If an in-person examination is clinically required, the patient will be advised to visit the clinic.</p>
+              <button type="button" class="btn btn-gold" id="bookTelemedicine"><i class="fa-solid fa-video"></i> Book Telemedicine</button>
+              <p style="font-size:.76rem">Not for emergencies or severe acute symptoms.</p>
+            </section>
+            <section class="assist-box">
+              <h3 class="mr">फॉर्म भरता येत नाही?</h3>
+              <p class="mr">थेट फोन करा किंवा WhatsApp उघडा. लिहिता येत नसेल तर WhatsApp वर voice note पाठवा.</p>
+              <div class="assist-actions">
+                <a class="btn btn-green" href="tel:+${CLINIC_PHONE}"><i class="fa-solid fa-phone"></i> फोन करा</a>
+                <a class="btn btn-wa" target="_blank" rel="noopener" href="https://wa.me/${CLINIC_PHONE}?text=${encodeURIComponent('नमस्कार डॉक्टर, मला अपॉइंटमेंटसाठी मदत हवी आहे.')} "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                <button class="btn btn-outline" type="button" id="listenHelp"><i class="fa-solid fa-volume-high"></i> ऐका</button>
+              </div>
+            </section>
+          </div>
+          <div class="process-note"><b>सोपे नियम:</b> वेबसाइटवर स्लॉट निवडा → WhatsApp request पाठवा → डॉक्टर/क्लिनिककडून <b>✅ CONFIRMED</b> किंवा <b>❌ NOT AVAILABLE + alternate slot</b> असा reply येईपर्यंत appointment final समजू नका.</div>`;
+        container.insertBefore(upgrade,contactGrid);
+      }
+    }
+
+    const oldForm=document.getElementById('appointmentForm');
+    if(oldForm){
+      const form=oldForm.cloneNode(true);
+      oldForm.replaceWith(form);
+      const fields=form.querySelector('.fields');
+      if(fields){
+        const branchLabel=form.querySelector('label[for="branch"]');
+        branchLabel?.insertAdjacentHTML('beforebegin',`
+          <label for="consultType"><span>Consultation type *</span>
+            <select id="consultType" required>
+              <option value="">Select consultation type *</option>
+              <option value="Clinic Visit">Clinic Visit</option>
+              <option value="Telemedicine / Video Consultation">Telemedicine / Video Consultation</option>
+              <option value="Follow-up Consultation">Follow-up Consultation</option>
+              <option value="Panchakarma Consultation">Panchakarma Consultation</option>
+            </select>
+          </label>
+          <label for="patientType"><span>Patient type *</span>
+            <select id="patientType" required>
+              <option value="">Select patient type *</option>
+              <option value="New Patient">New Patient</option>
+              <option value="Existing / Follow-up Patient">Existing / Follow-up Patient</option>
+            </select>
+          </label>`);
+
+        const branch=form.querySelector('#branch');
+        if(branch){
+          branch.innerHTML=`
+            <option value="">Select branch *</option>
+            <option value="Main Branch – Dolphin Statue / Shelhal Road">Main Branch – Dolphin Statue / Shelhal Road</option>
+            <option value="Krantinagar / Nideban Road (Home Branch)">Krantinagar / Nideban Road (Home Branch)</option>
+            <option value="Online / Telemedicine">Online / Telemedicine</option>`;
+          branch.required=true;
+        }
+
+        const timeLabel=form.querySelector('label[for="time"]');
+        if(timeLabel){
+          timeLabel.outerHTML=`
+            <div class="slot-picker">
+              <span style="display:block;font-size:.78rem;font-weight:700;color:#44554c;margin-bottom:5px">Preferred slot *</span>
+              <input type="hidden" id="slot" required>
+              <div class="slot-buttons" role="group" aria-label="Preferred appointment slot">
+                <button type="button" class="slot-choice" data-slot="Morning 7:00–9:00 AM"><b>🌅 Morning</b><small>7:00 AM – 9:00 AM</small></button>
+                <button type="button" class="slot-choice" data-slot="Evening 5:00–9:00 PM"><b>🌆 Evening</b><small>5:00 PM – 9:00 PM</small></button>
+              </div>
+            </div>`;
+        }
+
+        const concernLabel=form.querySelector('label[for="concern"]');
+        concernLabel?.insertAdjacentHTML('beforebegin',`
+          <label for="concernCategory"><span>Main health concern *</span>
+            <select id="concernCategory" required>
+              <option value="">Select main concern *</option>
+              <option>Joint pain / Arthritis / Stiffness</option>
+              <option>Back / Neck pain / Sciatica</option>
+              <option>Skin problem</option>
+              <option>Hair problem</option>
+              <option>Digestive complaint</option>
+              <option>Piles / Ano-rectal complaint</option>
+              <option>Weight management</option>
+              <option>Diabetes / Metabolic health</option>
+              <option>BP related consultation</option>
+              <option>Women's health / Menstrual complaint / PCOS</option>
+              <option>Fertility consultation</option>
+              <option>Male sexual health</option>
+              <option>Stress / Sleep / Headache</option>
+              <option>Panchakarma consultation</option>
+              <option>General Ayurvedic consultation</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label for="duration"><span>How long has this problem been present?</span>
+            <input id="duration" type="text" placeholder="e.g. 3 days / 6 months / 2 years">
+          </label>`);
+
+        if(concernLabel){
+          const span=concernLabel.querySelector('span');
+          const input=concernLabel.querySelector('#concern');
+          if(span) span.textContent='Brief symptoms / main complaint';
+          if(input) input.placeholder='Write in 1–2 short lines';
+        }
+
+        fields.insertAdjacentHTML('beforeend',`
+          <label class="tele-consent" id="teleConsentWrap">
+            <input type="checkbox" id="teleConsent">
+            <span>I consent to teleconsultation and understand that the doctor may advise an in-person examination if clinically necessary.</span>
+          </label>
+          <div class="help-line">Do not enter highly sensitive medical information here. For emergencies, do not wait for website/WhatsApp confirmation.</div>
+          <div class="request-summary" id="requestSummary"></div>`);
+      }
+
+      const date=form.querySelector('#date');
+      if(date){
+        date.required=true;
+        try{
+          date.min=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+        }catch(_){
+          date.min=new Date().toISOString().slice(0,10);
+        }
+      }
+
+      const consultType=form.querySelector('#consultType');
+      const branch=form.querySelector('#branch');
+      const slot=form.querySelector('#slot');
+      const consentWrap=form.querySelector('#teleConsentWrap');
+      const consent=form.querySelector('#teleConsent');
+      const summary=form.querySelector('#requestSummary');
+      const slotButtons=[...form.querySelectorAll('.slot-choice')];
+
+      function chooseSlot(value){
+        if(slot) slot.value=value;
+        slotButtons.forEach(btn=>btn.classList.toggle('active',btn.dataset.slot===value));
+        updateSummary();
+      }
+      slotButtons.forEach(btn=>btn.addEventListener('click',()=>chooseSlot(btn.dataset.slot||'')));
+
+      function updateMode(){
+        const tele=consultType?.value==='Telemedicine / Video Consultation';
+        if(branch){
+          if(tele){branch.value='Online / Telemedicine';branch.disabled=true;}
+          else if(branch.disabled){branch.disabled=false;if(branch.value==='Online / Telemedicine') branch.value='';}
+        }
+        if(consentWrap) consentWrap.classList.toggle('show',tele);
+        if(consent){consent.required=tele;if(!tele) consent.checked=false;}
+        updateSummary();
+      }
+
+      function updateSummary(){
+        if(!summary) return;
+        const type=consultType?.value||'Consultation type pending';
+        const br=branch?.value||'Branch pending';
+        const dt=date?.value||'Date pending';
+        const sl=slot?.value||'Slot pending';
+        summary.innerHTML=`<b>Request preview:</b> ${type} • ${br} • ${dt} • ${sl}<br><small>This is a request only. Appointment becomes final after clinic confirmation on WhatsApp.</small>`;
+        summary.classList.add('show');
+      }
+
+      consultType?.addEventListener('change',updateMode);
+      branch?.addEventListener('change',updateSummary);
+      date?.addEventListener('change',updateSummary);
+
+      const teleBtn=document.getElementById('bookTelemedicine');
+      if(teleBtn){
+        teleBtn.addEventListener('click',()=>{
+          if(consultType){
+            consultType.value='Telemedicine / Video Consultation';
+            updateMode();
+          }
+          form.scrollIntoView({behavior:'smooth',block:'start'});
+          setTimeout(()=>form.querySelector('#name')?.focus(),450);
+        });
+      }
+
+      const listen=document.getElementById('listenHelp');
+      if(listen){
+        listen.addEventListener('click',()=>{
+          const text='अपॉइंटमेंटसाठी खालील फॉर्म भरा. फॉर्म भरता येत नसेल तर फोन करा किंवा व्हॉट्सअॅपवर व्हॉइस नोट पाठवा. मॉर्निंग स्लॉट सकाळी सात ते नऊ आणि इव्हनिंग स्लॉट संध्याकाळी पाच ते नऊ आहे.';
+          if('speechSynthesis' in window){
+            window.speechSynthesis.cancel();
+            const u=new SpeechSynthesisUtterance(text);u.lang='mr-IN';u.rate=.9;window.speechSynthesis.speak(u);
+          }else alert(text);
+        });
+      }
+
+      form.addEventListener('submit',e=>{
+        e.preventDefault();
+        const get=id=>(form.querySelector('#'+id)?.value||'').trim();
+        const name=get('name'), phone=get('phone'), age=get('age'), patientType=get('patientType');
+        const type=get('consultType'), br=get('branch'), dt=get('date'), sl=get('slot');
+        const cat=get('concernCategory'), duration=get('duration'), brief=get('concern'), extra=get('message');
+
+        if(!name || !phone || !patientType || !type || !br || !dt || !sl || !cat){
+          alert('Please complete all required fields, including Morning/Evening slot.');
+          return;
+        }
+        if(type==='Telemedicine / Video Consultation' && consent && !consent.checked){
+          alert('Please accept telemedicine consent before continuing.');
+          consent.focus();return;
+        }
+
+        const id='VAC-'+dt.replaceAll('-','').slice(2)+'-'+String(Date.now()).slice(-4);
+        const lines=[
+          '🩺 *NEW APPOINTMENT REQUEST – Vishnu Ayurved Clinic*',
+          `Booking ID: ${id}`,
+          '',
+          `Patient: ${name}`,
+          `Mobile: ${phone}`,
+          age?`Age: ${age}`:'',
+          `Patient type: ${patientType}`,
+          `Consultation: ${type}`,
+          `Branch: ${br}`,
+          `Date: ${dt}`,
+          `Preferred slot: ${sl}`,
+          `Main concern: ${cat}`,
+          duration?`Duration: ${duration}`:'',
+          brief?`Brief symptoms: ${brief}`:'',
+          extra?`Additional details: ${extra}`:'',
+          '',
+          '⏳ *Status: WAITING FOR CLINIC CONFIRMATION*',
+          'Doctor/Clinic reply:',
+          '✅ YES / CONFIRMED',
+          'or',
+          '❌ NO / NOT AVAILABLE – please suggest another slot',
+          '',
+          'Please confirm this appointment. Thank you.'
+        ].filter(Boolean);
+        const url='https://wa.me/'+CLINIC_PHONE+'?text='+encodeURIComponent(lines.join('\n'));
+        window.location.href=url;
+      });
+
       updateMode();
-      form.scrollIntoView({behavior:'smooth',block:'start'});
-      setTimeout(()=>form.querySelector('#name')?.focus(),500);
-    });
-
-    // Spoken Marathi help for patients who prefer audio guidance.
-    document.getElementById('listenHelp')?.addEventListener('click',()=>{
-      const text='अपॉइंटमेंटसाठी फोन करा हे बटण दाबा, किंवा व्हॉट्सअॅप बटण दाबा. सकाळची वेळ सात ते नऊ आणि संध्याकाळची वेळ पाच ते नऊ आहे. घरच्या क्रांतीनगर शाखेसाठी डॉक्टरांच्या पुष्टीनुसार वेळ बदलता येऊ शकते.';
-      if('speechSynthesis' in window){
-        speechSynthesis.cancel();
-        const u=new SpeechSynthesisUtterance(text); u.lang='mr-IN'; u.rate=.9; speechSynthesis.speak(u);
-      }else alert(text);
-    });
-
-    const normalizePhone=(raw)=>{
-      let p=(raw||'').replace(/\D/g,'');
-      if(p.length===10) p='91'+p;
-      if(p.startsWith('0') && p.length===11) p='91'+p.slice(1);
-      return p;
-    };
-    const value=id=>form.querySelector('#'+id)?.value?.trim()||'';
-    const requestId=()=>{
-      const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(new Date()).reduce((a,p)=>(a[p.type]=p.value,a),{});
-      return `VAC-${parts.year}${parts.month}${parts.day}-${parts.hour}${parts.minute}${parts.second}`;
-    };
-
-    form.addEventListener('submit',e=>{
-      e.preventDefault();
-      if(!form.reportValidity()) return;
-      const patientPhone=normalizePhone(value('phone'));
-      if(patientPhone.length<12){ alert('Please enter a valid 10-digit mobile number.'); return; }
-
-      const id=requestId();
-      const finalBranch=(consultType.value==='Telemedicine / Video Consultation')?'Online / Telemedicine':value('branch');
-      const patientWa=`https://wa.me/${patientPhone}`;
-      const lines=[
-        '🟢 NEW APPOINTMENT REQUEST',
-        `Request ID: ${id}`,
-        '',
-        `Consultation: ${value('consultType')}`,
-        `Patient type: ${value('patientType')}`,
-        `Patient: ${value('name')}`,
-        `Mobile: ${value('phone')}`,
-        value('age')?`Age: ${value('age')}`:'',
-        `Branch / Mode: ${finalBranch}`,
-        `Preferred date: ${value('date')}`,
-        `Preferred slot: ${value('slot')}`,
-        '',
-        `Main concern: ${value('concernCategory')}`,
-        value('duration')?`Duration: ${value('duration')}`:'',
-        value('concern')?`Brief symptoms: ${value('concern')}`:'',
-        value('message')?`Additional details: ${value('message')}`:'',
-        '',
-        '⚠️ SLOT REQUEST — NOT YET CONFIRMED',
-        'Doctor, please reply with one of these:',
-        `✅ CONFIRMED — ${value('date')} — ${value('slot')} — ${finalBranch}`,
-        'OR',
-        '❌ NOT AVAILABLE — Please suggest another slot.',
-        '',
-        `Patient WhatsApp: ${patientWa}`,
-        '',
-        'Patient: Please wait for clinic confirmation before visiting.'
-      ].filter(Boolean);
-
-      window.open(`https://wa.me/${CLINIC_PHONE}?text=${encodeURIComponent(lines.join('\n'))}`,'_blank','noopener');
-    },true);
-  }
+    }
+  });
 })();
