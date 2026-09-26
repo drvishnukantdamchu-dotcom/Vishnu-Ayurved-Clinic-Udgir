@@ -25,3 +25,16 @@ The language control translates key navigation, headings and selected copy;
 some supporting content remains bilingual or English.
 
 Local preview: `python -m http.server 8765`
+
+## Ayurveda knowledge centre
+
+`ayurveda.html` adds twelve Marathi/English patient-education topics, with
+search and category filters. It opens in Marathi and remains readable without
+JavaScript. `knowledge.css` uses locally hosted Baloo 2 headings alongside
+Noto Sans Devanagari body text; font licences are in `fonts/`.
+References are linked at the bottom of the guide. Traditional frameworks are
+identified as such; no automatic diagnosis or medicine prescription is provided.
+
+Verified at desktop and 390px mobile widths: no horizontal overflow, local font
+loading, all twelve articles, category filtering, bilingual search, language
+switch and empty-search feedback; no JavaScript runtime errors in those checks.
