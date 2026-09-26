@@ -2,7 +2,7 @@
 (()=>{
   'use strict';
   const CLINIC_PHONE='919518355385';
-  const DOCTOR_IMAGE='images/doctor-sharp-20260926.webp?v=3';
+  const DOCTOR_IMAGE='images/doctor-sharp-20260926.webp?v=4';
   function ready(fn){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fn,{once:true});else fn();}
   ready(()=>{
     const doctorImg=document.querySelector('.doctor-frame img');if(doctorImg){doctorImg.src=DOCTOR_IMAGE;doctorImg.removeAttribute('srcset');doctorImg.decoding='async';doctorImg.loading='eager';doctorImg.style.filter='none';doctorImg.style.imageRendering='auto';doctorImg.style.objectFit='contain';doctorImg.style.objectPosition='center bottom';}
