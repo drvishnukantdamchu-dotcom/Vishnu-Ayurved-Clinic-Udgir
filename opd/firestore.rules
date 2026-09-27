@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Phase 2: roles are provisioned through the trusted console, never by the client.
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, create, update, delete: if false;
+    }
+    // Patient collections remain inaccessible until separately validated clinical rules ship.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

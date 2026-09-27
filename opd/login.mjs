@@ -1,0 +1,34 @@
+import {createAuth, permissions} from './auth.mjs';
+const panel=document.createElement('section');
+panel.className='panel';
+panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
+<p id="auth-status" role="status">Firebase configuration तपासत आहे…</p>
+<form id="auth-form"><label for="auth-email">वापरकर्त्याचा ईमेल</label><input id="auth-email" type="email" autocomplete="username" required disabled>
+<label for="auth-password">पासवर्ड</label><input id="auth-password" type="password" autocomplete="current-password" required disabled>
+<div class="actions"><button id="auth-submit" type="submit" disabled>लॉगिन तपासा</button><button id="auth-out" type="button" hidden>लॉगआउट</button></div></form>
+<p id="auth-role"></p><p class="muted">हे login connection परीक्षण आहे. रुग्णांचा डेटाबेस अद्याप बंद आहे. स्वतः नोंदणी करून Admin अधिकार मिळत नाहीत.</p>`;
+document.getElementById('settings').prepend(panel);
+const status=panel.querySelector('#auth-status'), form=panel.querySelector('form');
+const controls=[...form.querySelectorAll('input'),panel.querySelector('#auth-submit')];
+const out=panel.querySelector('#auth-out'),roleLabel=panel.querySelector('#auth-role');
+let auth;
+function reset(message){auth?.logout();form.reset();roleLabel.textContent='';out.hidden=true;controls.forEach(e=>e.disabled=!auth?.configured);status.textContent=message;}
+try {
+ const response=await fetch('./firebase-config.json',{cache:'no-store'});
+ if(!response.ok)throw new Error('CONFIG');
+ auth=createAuth(await response.json());
+ reset(auth.configured?'लॉगिन जोडणी तपासता येईल; clinical access बंद आहे.':'Firebase project जोडलेला नाही. लॉगिन सध्या बंद आहे.');
+}catch{reset('Configuration उपलब्ध नाही. सुरक्षिततेसाठी लॉगिन बंद आहे.');}
+form.addEventListener('submit',async e=>{
+ e.preventDefault();controls.forEach(c=>c.disabled=true);status.textContent='ओळख व परवानगी तपासत आहे…';
+ try{
+  const user=await auth.login(panel.querySelector('#auth-email').value,panel.querySelector('#auth-password').value);
+  const p=permissions(user.role);
+  status.textContent='ओळख पडताळली. हा अजून demo workspace आहे.';
+  roleLabel.textContent=`भूमिका: ${user.role} · Clinical approval: ${p.approveClinical?'हो':'नाही'} · User management: ${p.manageUsers?'हो':'नाही'}`;
+  form.reset();out.hidden=false;
+ }catch{reset('लॉगिन झाले नाही. ईमेल, पासवर्ड, खाते सक्रियता आणि दिलेले अधिकार तपासा.');}
+ finally{panel.querySelector('#auth-password').value='';}
+});
+out.onclick=()=>reset('लॉगआउट झाले.');
+setInterval(()=>{if(!out.hidden&&!auth?.current())reset('सत्र संपले. पुन्हा लॉगिन करा.');},15000);
