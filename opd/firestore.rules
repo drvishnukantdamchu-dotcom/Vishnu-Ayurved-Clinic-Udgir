@@ -66,12 +66,43 @@ service cloud.firestore {
         && (doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid));
       allow delete: if member() && role() == 'owner';
     }
+    // Synthetic prescriptions: clinician roles only; no student or public access.
+    function validDemoPrescription(data, documentId) {
+      return data.keys().hasAll(['id','createdBy','updatedBy','payload','updatedAt'])
+        && data.keys().hasOnly(['id','createdBy','updatedBy','payload','updatedAt'])
+        && data.id == documentId
+        && data.id.matches('VAC-DEMO-[A-Za-z0-9_-]{1,140}')
+        && data.createdBy is string
+        && data.updatedBy is string
+        && data.updatedAt is string
+        && data.updatedAt.size() <= 40
+        && data.payload is map
+        && data.payload.keys().hasAll(['diagnosis','advice','followup','drugs'])
+        && data.payload.keys().hasOnly(['diagnosis','advice','followup','drugs'])
+        && data.payload.diagnosis is string && data.payload.diagnosis.size() <= 2000
+        && data.payload.advice is string && data.payload.advice.size() <= 2000
+        && data.payload.followup is string && data.payload.followup.size() <= 10
+        && data.payload.drugs is list && data.payload.drugs.size() <= 20;
+    }
+    match /demoPrescriptions/{patientId} {
+      allow get: if doctorOrOwner();
+      allow list: if false;
+      allow create: if doctorOrOwner()
+        && validDemoPrescription(request.resource.data,patientId)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow update: if doctorOrOwner()
+        && validDemoPrescription(request.resource.data,patientId)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if member() && role() == 'owner';
+    }
     // User roles remain console-provisioned. No client-side role changes.
     match /users/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
-    // Prescriptions, images and all other collections stay closed.
+    // Images and all other collections stay closed.
     match /{document=**} {
       allow read, write: if false;
     }

@@ -1,4 +1,4 @@
-import {allDemo,putDemo,syntheticId} from './demo-store.mjs?v=19';
+import {allDemo,putDemo,syntheticId} from './demo-store.mjs?v=20';
 import {todayIST} from './patient-model.mjs';
 const records=[];const patients=new Map();
 const section=document.getElementById('panchakarma');section.replaceChildren();

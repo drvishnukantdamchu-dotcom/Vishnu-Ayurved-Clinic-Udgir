@@ -39,6 +39,7 @@ export function createAuth(config, request = fetch) {
     const documents=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents`;
     if(path==='patientIntakes:runQuery')return `${documents}:runQuery`;
     if(/^demoClinical\/VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
+    if(/^demoPrescriptions\/VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
     if(/^patientIntakes\/[A-Za-z0-9_-]{1,150}$/.test(path))return `${documents}/${path}`;
     throw new Error('PATH_DENIED');
   }
@@ -107,6 +108,28 @@ export function createAuth(config, request = fetch) {
       const record={id,createdBy:author,payload,updatedAt:new Date().toISOString()};
       const fields=Object.fromEntries(Object.entries(record).map(([k,v])=>[k,toValue(v)]));
       await firestore(`demoClinical/${id}`,{method:'PATCH',body:{fields}});
+      return record;
+    },
+    async loadDemoPrescription(id){
+      if(!session)throw new Error('SESSION_EXPIRED');
+      if(!['owner','doctor'].includes(session.role))throw new Error('ROLE_DENIED');
+      if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(id))throw new Error('SYNTHETIC_ONLY');
+      const row=await firestore(`demoPrescriptions/${id}`);
+      const data=Object.fromEntries(Object.entries(row.fields||{}).map(([k,v])=>[k,fromValue(v)]));
+      if(data.id!==id||!data.payload||!Array.isArray(data.payload.drugs))throw new Error('INVALID_RECORD');
+      return data;
+    },
+    async saveDemoPrescription(id,payload){
+      if(!session)throw new Error('SESSION_EXPIRED');
+      if(!['owner','doctor'].includes(session.role))throw new Error('ROLE_DENIED');
+      if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(id)||!Array.isArray(payload?.drugs)||typeof payload?.diagnosis!=='string'||typeof payload?.advice!=='string'||typeof payload?.followup!=='string')throw new Error('SYNTHETIC_ONLY');
+      if(payload.drugs.length>20||JSON.stringify(payload).length>40000)throw new Error('RECORD_TOO_LARGE');
+      let author=session.uid;
+      try{const prior=await this.loadDemoPrescription(id);author=prior.createdBy}
+      catch(error){if(error.message!=='AUTH_FAILED')throw error}
+      const record={id,createdBy:author,updatedBy:session.uid,payload,updatedAt:new Date().toISOString()};
+      const fields=Object.fromEntries(Object.entries(record).map(([k,v])=>[k,toValue(v)]));
+      await firestore(`demoPrescriptions/${id}`,{method:'PATCH',body:{fields}});
       return record;
     },
     async login(email, password) {

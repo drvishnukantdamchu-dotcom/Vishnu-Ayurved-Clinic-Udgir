@@ -57,3 +57,20 @@ test('synthetic clinical draft uses authenticated patient document and immutable
  assert.equal(saved.createdBy,'student-uid');assert.match(calls[2].url,/demoClinical\/VAC-DEMO-1$/);assert.equal(calls[3].options.headers.Authorization,'Bearer token');
  const written=JSON.parse(calls[3].options.body).fields;assert.equal(written.createdBy.stringValue,'student-uid');assert.equal(written.payload.mapValue.fields.values.mapValue.fields.bp.stringValue,'120/80');
 });
+test('students cannot read or write prescriptions in the client adapter',async()=>{
+ const calls=[];const responses=[{localId:'student-uid',idToken:'token'},doc('student')];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('student@example.com','secret');
+ await assert.rejects(a.loadDemoPrescription('VAC-DEMO-1'),/ROLE_DENIED/);
+ await assert.rejects(a.saveDemoPrescription('VAC-DEMO-1',{diagnosis:'',advice:'',followup:'',drugs:[]}),/ROLE_DENIED/);
+ assert.equal(calls.length,2);
+});
+test('doctor saves prescription only to synthetic prescription path',async()=>{
+ const calls=[];const responses=[{localId:'doctor-uid',idToken:'token'},doc('doctor'),null,{name:'projects/test/databases/(default)/documents/demoPrescriptions/VAC-DEMO-1'}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});const payload=responses.shift();return payload===null?{ok:false,status:404,json:async()=>({})}:{ok:true,json:async()=>payload}});
+ await a.login('doctor@example.com','secret');
+ const saved=await a.saveDemoPrescription('VAC-DEMO-1',{diagnosis:'sample',advice:'',followup:'',drugs:[{name:'sample tablet',form:'वटी',dose:'1 गोळी',times:'संध्याकाळ',food:'जेवणानंतर',vehicle:'',duration:'5 दिवस',site:''}]});
+ assert.equal(saved.createdBy,'doctor-uid');
+ assert.match(calls.at(-1).url,/demoPrescriptions\/VAC-DEMO-1$/);
+ assert.equal(JSON.parse(calls.at(-1).options.body).fields.payload.mapValue.fields.drugs.arrayValue.values.length,1);
+});
