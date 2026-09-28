@@ -1,16 +1,17 @@
 import {todayIST,validatePatient,searchPatients} from './patient-model.mjs';
-import './clinical.mjs?v=17';
-import './prescription.mjs?v=17';
-import './panchakarma.mjs?v=17';
-import './followup.mjs?v=17';
-import './reports.mjs?v=17';
-import './documents.mjs?v=17';
-import './review.mjs?v=17';
-import {getAuthProvider} from './auth-context.mjs?v=17';
+import './clinical.mjs?v=18';
+import './prescription.mjs?v=18';
+import './panchakarma.mjs?v=18';
+import './followup.mjs?v=18';
+import './reports.mjs?v=18';
+import './documents.mjs?v=18';
+import './review.mjs?v=18';
+import './backup.mjs?v=18';
+import {getAuthProvider} from './auth-context.mjs?v=18';
 const section=document.getElementById('patients');
 document.querySelector('label[for="search"]').textContent='नाव, Patient ID, गाव किंवा मोबाइल';
 const panel=document.createElement('details');panel.className='panel';
-panel.innerHTML=`<summary>＋ नवीन नमुना रुग्ण नोंदवा</summary><p class="notice">फक्त काल्पनिक माहिती वापरा. Login व Firestore नियम सक्रिय असल्यास नाव/संपर्क/भेट तारीख सुरक्षित rules अंतर्गत Firebase patient intakeमध्ये जतन होईल; अन्यथा ही नोंद फक्त या टॅबमध्ये राहील. इतर clinical माहिती या टप्प्यात cloudमध्ये जात नाही.</p>
+panel.innerHTML=`<summary>＋ नवीन नमुना रुग्ण नोंदवा</summary><p class="notice">फक्त काल्पनिक माहिती वापरा. Login व Firestore नियम सक्रिय असल्यास नाव/संपर्क/भेट तारीख सुरक्षित rules अंतर्गत Firebase patient intakeमध्ये जतन होईल; अन्यथा ही नोंद फक्त या टॅबमध्ये राहील. इतर काल्पनिक clinical माहिती या डिव्हाइसवर टिकते; cloudमध्ये जात नाही.</p>
 <form id="registration"><div class="form-grid">
 <label>पूर्ण नाव *<input name="name" required maxlength="100" autocomplete="off" placeholder="नमुना रुग्ण ड"></label>
 <label>वय (वर्षे)<input name="age" type="number" min="0" max="120" step="1"></label>

@@ -1,13 +1,14 @@
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=18';
 // Synthetic-only case-taking drafts. No localStorage, cloud writes or clinical advice.
 const drafts=new Map();
 const fields=[['bp','BP (mmHg)'],['pulse','Pulse (/min)'],['spo2','SpO₂ (%)'],['temperature','तापमान (°C)'],['weight','वजन (kg)'],['allergy','ॲलर्जी'],['history','पूर्वव्याधी / औषधांचा इतिहास'],['surgery','शस्त्रक्रिया / पूर्वीचे admission'],['addiction','व्यसनाची नोंद'],['nadi','नाडी'],['urine','मूत्र'],['stool','मल'],['tongue','जिह्वा'],['voice','शब्द'],['touch','स्पर्श'],['eyes','दृक्'],['build','आकृती'],['agni','अग्नी'],['strength','बल'],['notes','इतर निरीक्षणे']];
 document.addEventListener('opd-case-open',e=>{
- const patient=e.detail,box=document.getElementById('case-content');
+ const patient=e.detail,box=document.getElementById('case-content');if(!syntheticId(patient.id))return;
  const saved=drafts.get(patient.id)||{complaints:[{text:'',duration:'',severity:''}],values:{}};
  const summary=document.createElement('section');box.append(summary);
  const form=document.createElement('form');form.className='clinical-editor';
  const heading=document.createElement('h2');heading.textContent='केस-टेकिंग · काल्पनिक चाचणी';form.append(heading);
- const hint=document.createElement('p');hint.textContent='नोंदी या टॅबपुरत्या राहतील. रिकामे field म्हणजे तपासणी नोंदवलेली नाही; सामान्य असल्याचे गृहीत धरले जाणार नाही.';form.append(hint);
+ const hint=document.createElement('p');hint.textContent='काल्पनिक नोंदी या डिव्हाइसवर साठतात; Firebase किंवा दुसऱ्या डिव्हाइसवर दिसत नाहीत. रिकामे field म्हणजे तपासणी नोंदवलेली नाही.';form.append(hint);
  const rows=document.createElement('div');form.append(rows);
  function addComplaint(c={text:'',duration:'',severity:''}){
   const row=document.createElement('div');row.className='complaint-row form-grid';
@@ -29,11 +30,11 @@ document.addEventListener('opd-case-open',e=>{
   if(!lines.length)lines.push('परीक्षणाची नोंद अद्याप केलेली नाही.');
   for(const text of lines){const p=document.createElement('p');p.textContent=text;summary.append(p)}
  }
- draw(saved);
- form.addEventListener('submit',event=>{event.preventDefault();const complaints=[...rows.children].map(row=>Object.fromEntries([...row.querySelectorAll('input')].map(input=>[input.dataset.key,input.value.trim()])));
+ draw(saved);getDemo('clinical',patient.id).then(stored=>{if(!stored||drafts.has(patient.id))return;drafts.set(patient.id,stored);for(const row of [...rows.children])row.remove();(stored.complaints||[]).forEach(addComplaint);for(const [key] of fields)form.elements[key].value=stored.values?.[key]||'';draw(stored)}).catch(()=>{status.textContent='या ब्राउझरमध्ये स्थानिक साठवण उपलब्ध नाही.'});
+ form.addEventListener('submit',async event=>{event.preventDefault();const complaints=[...rows.children].map(row=>Object.fromEntries([...row.querySelectorAll('input')].map(input=>[input.dataset.key,input.value.trim()])));
   if(complaints.some(c=>!c.text&&(c.duration||c.severity))){status.textContent='कालावधी किंवा तीव्रतेसोबत तक्रारीचे नाव भरा.';return}
   const values=Object.fromEntries(new FormData(form));
-  const data={complaints,values};drafts.set(patient.id,data);draw(data);status.textContent='या टॅबमध्ये नमुना केस जतन केला. आता खालील प्रिंट बटण वापरा. Refresh केल्यावर नोंद मिटेल.';
+  const data={complaints,values};try{await putDemo('clinical',patient.id,data);drafts.set(patient.id,data);draw(data);status.textContent='काल्पनिक केस या डिव्हाइसवर जतन झाला.'}catch{status.textContent='जतन झाले नाही; ब्राउझर साठवण तपासा.'};
  });
- forward.addEventListener('click',()=>{const data=drafts.get(patient.id);if(!data){status.textContent='आधी नमुना केस नोंद जतन करा.';return}document.dispatchEvent(new CustomEvent('opd-clinical-review-submit',{detail:{patient,data,submittedAt:new Date().toISOString()}}));status.textContent='नमुना केस डॉक्टर पुनरावलोकन यादीत पाठवली. ही माहिती फक्त या टॅबमध्ये राहते.'});
+ forward.addEventListener('click',()=>{const data=drafts.get(patient.id);if(!data){status.textContent='आधी नमुना केस नोंद जतन करा.';return}document.dispatchEvent(new CustomEvent('opd-clinical-review-submit',{detail:{patient,data,submittedAt:new Date().toISOString()}}));status.textContent='नमुना केस डॉक्टर पुनरावलोकन यादीत पाठवली. ही पुनरावलोकन यादी refresh झाल्यावर मिटते.'});
 });

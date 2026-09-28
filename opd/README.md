@@ -1,23 +1,18 @@
-# Phase 1: Clinical PWA shell
+# Vishnu Ayurved OPD demonstration PWA
 
-## Firebase intake sync checkpoint
+Public app: https://drvishnukantdamchu-dotcom.github.io/Vishnu-Ayurved-Clinic-Udgir/opd/
 
-Settings contains Firebase Email/Password login. `auth.mjs` reads the authenticated UID's role document, refreshes its ID token in memory, and ends the session after 15 minutes or reload. `patientIntakes` is the only collection enabled in the proposed Firestore rules. Students query only their own UID; doctors/owner can read all intakes; students may edit only their own intake. Role profiles remain console-provisioned.
+**Synthetic demonstration data only. Do not enter real patient details or clinical documents.** IDs must start with `VAC-DEMO-`. The app is a prototype, not a deployable clinical record system or a reliable emergency-access service.
 
-The web form intentionally requires the synthetic-data checkbox and client code refuses to sync IDs outside `VAC-DEMO-*`. Cloud sync must not be used for real patient records yet. Case-taking, prescriptions, Panchakarma, attachments, reports/review queues are not persisted to Firebase. No Firebase Storage, Drive bridge, full backup or restore exists. Student/owner screen controls are not sufficient access control by themselves; Firestore rules enforce the narrow Patient Intake collection boundary.
+## Current behavior
 
-Before enabling this test: Firebase Console → Firestore Database → Rules, replace rules with `firestore.rules`, Publish; keep `users/<Auth UID>` role and active values correct. The owner UID is already provisioned by the clinic owner. For each test student, create the Auth account and trusted `users/<Auth UID>` document with `role: student` and `active: true`. Client registration cannot grant roles. Put only the public web API key and project ID in `firebase-config.json`; never a service-account private key or password.
+- Firebase Email/Password login checks trusted `users/<Auth UID>` role documents; sessions live in memory for 15 minutes or until reload. Only `patientIntakes` has published Firestore permissions. Synthetic patient intakes sync across devices after login; other clinical collections are denied by rules.
+- Case-taking, prescription drafts, Panchakarma sessions and synthetic PDF/JPG/PNG attachments persist in **this browser's IndexedDB** across refreshes, under the `VAC-DEMO-*` namespace. They do not sync to Firebase or Drive, and browser storage removal/private mode/device loss can erase them. Review queue and follow-up list are session-only. Attachment max 5 MB, 20 files per demo patient.
+- Owner login can download a JSON backup of the browser-local synthetic records, including attachment bytes, and restore it manually from Settings. This is **not an automatic cloud backup**. The downloaded file is unencrypted: do not use it with patient records and store it privately. Restore replaces matching local entries, requires confirmation and reload, and does not restore Firestore intakes.
+- A4 case-paper print, search, sample reports and PWA installation work for demonstration. Reports do not count actual clinical visits. No pharmacy, billing, marketing, WhatsApp sending or Firebase Storage integrations.
 
-Rules need Firebase Emulator/Rules Playground tests and live login/read/write/denial verification after the owner publishes them. The supplied Chromium test exercises the published UI only and never logs into Firebase.
+## Remaining production work
 
-Firebase and Drive configurations are independent. Keep billing disabled and use synthetic records until role revocation, rules, security and restore checks pass.
+Design and enforce collection-specific owner/doctor/student Firestore rules, server-side identity/approval workflows, immutable visit history and conflict resolution; implement live remote clinical sync, appointment and report queries, secure document storage and an encrypted, verified Drive backup bridge. Test role denial, revoke, restore, mobile use, A4 printing, cross-device synchronization and offline behavior before allowing real patients. Auth role screens alone do not secure data. Firebase web API keys are public identifiers; never ship service-account secrets.
 
-Demo only. No real patient storage, authentication, Firebase connection, Drive bridge, or backup exists yet. All displayed patients are fictional. Existing public clinic pages are unchanged.
-
-Implemented: responsive clinic-branded dashboard, navigation, sample name/ID/village search, sample case-paper dialog and print stylesheet, month selector, large text mode, online indicator, manifest and static-shell-only service worker. Serve over localhost/HTTPS; file:// cannot install a PWA.
-
-Next: Firebase Spark configuration supplied/authorized by owner, deny-by-default Firestore rules, explicit owner bootstrap, student allowlisting, role tests. Never identify owner by a client-side editable email alone. Drive authentication does not inherit Firebase permissions: design/test a separate authorized file gateway before real uploads. No public report links or owner tokens in clients.
-
-Offline support must be limited to trusted devices. Cached data is not a full backup. Approved clinical records need revision history and conflict review rather than silent last-write-wins. Historical visits retain visit date separately from actual entry timestamp. Reports distinguish visits from unique patients.
-
-Backups need encryption key recovery and tested restore. Closed browsers cannot guarantee background backups. Free quotas can interrupt service; no unlimited-free or emergency-availability guarantee. Production launch requires security, restore, remote-access, print and installation tests.
+Run `node --test opd/*.test.mjs` from the repo root (or `node --test *.test.mjs` here).
