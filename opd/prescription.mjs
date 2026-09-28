@@ -5,7 +5,7 @@ document.addEventListener('opd-case-open',event=>{
  const id=event.detail.id,box=document.getElementById('case-content');
  const data=prescriptions.get(id)||{diagnosis:'',advice:'',followup:'',drugs:[]};
  const summary=document.createElement('section');summary.className='prescription-summary';box.append(summary);
- const form=document.createElement('form');form.className='clinical-editor';
+ const form=document.createElement('form');form.className='clinical-editor';form.id='prescription-editor';
  const h=document.createElement('h2');h.textContent='निदान व प्रिस्क्रिप्शन · नमुना मसुदा';form.append(h);
  const warning=document.createElement('p');warning.className='notice';warning.textContent='फक्त काल्पनिक चाचणी. हा मंजूर प्रिस्क्रिप्शन नाही. औषधे किंवा मात्रा आपोआप सुचवली जात नाहीत.';form.append(warning);
  function field(parent,name,label,value='',multiline=false){const l=document.createElement('label');l.textContent=label;const input=document.createElement(multiline?'textarea':'input');input.name=name;input.maxLength=multiline?2000:300;input.value=value;l.append(input);parent.append(l);return input;}
