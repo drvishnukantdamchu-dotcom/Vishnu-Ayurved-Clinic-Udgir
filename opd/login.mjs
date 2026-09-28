@@ -1,5 +1,5 @@
-import {createAuth, permissions} from './auth.mjs?v=16';
-import {setAuthProvider} from './auth-context.mjs?v=16';
+import {createAuth, permissions} from './auth.mjs?v=17';
+import {setAuthProvider} from './auth-context.mjs?v=17';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
@@ -18,7 +18,7 @@ try {
  const response=await fetch('./firebase-config.json',{cache:'no-store'});
  if(!response.ok)throw new Error('CONFIG');
  auth=createAuth(await response.json());
- reset(auth.configured?'Login तयार. Patient Intake syncसाठी नवीन Firestore rules आधी publish करा.':'Firebase project जोडलेला नाही. लॉगिन सध्या बंद आहे.');
+ reset(auth.configured?'Firebase तयार आहे. लॉगिननंतर फक्त काल्पनिक Patient Intake sync करता येईल.':'Firebase project जोडलेला नाही. लॉगिन सध्या बंद आहे.');
 }catch{reset('Configuration उपलब्ध नाही. सुरक्षिततेसाठी लॉगिन बंद आहे.');}
 form.addEventListener('submit',async e=>{
  e.preventDefault();controls.forEach(c=>c.disabled=true);status.textContent='ओळख व परवानगी तपासत आहे…';
