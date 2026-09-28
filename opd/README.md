@@ -16,3 +16,7 @@ Public app: https://drvishnukantdamchu-dotcom.github.io/Vishnu-Ayurved-Clinic-Ud
 Design and enforce collection-specific owner/doctor/student Firestore rules, server-side identity/approval workflows, immutable visit history and conflict resolution; implement live remote clinical sync, appointment and report queries, secure document storage and an encrypted, verified Drive backup bridge. Test role denial, revoke, restore, mobile use, A4 printing, cross-device synchronization and offline behavior before allowing real patients. Auth role screens alone do not secure data. Firebase web API keys are public identifiers; never ship service-account secrets.
 
 Run `node --test opd/*.test.mjs` from the repo root (or `node --test *.test.mjs` here).
+
+## Report improvements (v21)
+
+The initial month now sets inclusive date bounds. Screen, CSV and print share the same sorted filters, including mobile search. Empty/invalid ranges disable export and print. A4 report styling includes clinic identity, selected dates and repeating table headings. Counts represent loaded intake records, not a longitudinal visit ledger. Cloud intake updates refresh existing report rows without duplicating the queue. CSV text beginning with spreadsheet formula operators is neutralized.

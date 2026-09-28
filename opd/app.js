@@ -10,14 +10,13 @@ render(document.getElementById('queue'),samples);render(document.getElementById(
 document.addEventListener('opd-request-samples',()=>document.dispatchEvent(new CustomEvent('opd-samples-ready',{detail:samples})));
 document.addEventListener('opd-filtered',e=>render(document.getElementById('results'),e.detail));
 document.addEventListener('opd-open-patient',e=>showCase(e.detail));
-document.addEventListener('opd-added',e=>{samples.push(e.detail);render(document.getElementById('queue'),samples);document.querySelector('.stats article strong').textContent=String(samples.length);document.querySelectorAll('.stats article strong')[1].textContent=String(samples.filter(p=>p.type==='नवीन').length)});
+document.addEventListener('opd-added',e=>{const i=samples.findIndex(p=>p.id===e.detail.id);if(i<0)samples.push(e.detail);else samples[i]=e.detail;render(document.getElementById('queue'),samples);document.querySelector('.stats article strong').textContent=String(samples.length);document.querySelectorAll('.stats article strong')[1].textContent=String(samples.filter(p=>p.type==='नवीन').length)});
 document.addEventListener('DOMContentLoaded',()=>document.dispatchEvent(new CustomEvent('opd-samples-ready',{detail:samples})));
 document.getElementById('close').onclick=()=>document.getElementById('case').close();document.getElementById('print').textContent='A4 प्रिंट / PDF';document.getElementById('print').onclick=()=>window.print();
 const originalShowCase=showCase;
 showCase=function(p){originalShowCase(p);for(const [label,value] of [['भेटीची तारीख',p.visitDate],['वय',p.age],['लिंग',p.gender],['मोबाइल',p.mobile],['नोंद केल्याची वेळ',p.enteredAt]])if(value){const line=document.createElement('p');line.textContent=label+': '+value;document.getElementById('case-content').append(line)}document.dispatchEvent(new CustomEvent('opd-case-open',{detail:p}))};
 document.getElementById('date').textContent=new Intl.DateTimeFormat('mr-IN',{dateStyle:'full',timeZone:'Asia/Kolkata'}).format(new Date());
 document.getElementById('text-size').onclick=e=>{const active=document.body.classList.toggle('large');e.target.setAttribute('aria-pressed',String(active))};
-const month=document.getElementById('month');month.value=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',timeZone:'Asia/Kolkata'}).format(new Date()).replace('/','-');function report(){document.getElementById('report-note').textContent=`निवड: ${month.value || 'महिना निवडा'} · प्रत्यक्ष डेटाबेस अद्याप जोडलेला नाही.`}month.onchange=report;report();
 let firebaseSignedIn=false;
 function network(){const connection=navigator.onLine?'इंटरनेट उपलब्ध':'ऑफलाइन';const cloud=!navigator.onLine?'Cloud sync थांबले':firebaseSignedIn?'Firebase · काल्पनिक intake sync':'Firebase login आवश्यक';document.getElementById('network').textContent=`${connection} · ${cloud}`}
 window.addEventListener('online',network);window.addEventListener('offline',network);window.addEventListener('opd-auth-change',e=>{firebaseSignedIn=Boolean(e.detail);network()});network();

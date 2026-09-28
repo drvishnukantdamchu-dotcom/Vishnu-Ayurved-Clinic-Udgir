@@ -1,13 +1,13 @@
 import {todayIST,validatePatient,searchPatients} from './patient-model.mjs';
-import './clinical.mjs?v=20';
-import './prescription.mjs?v=20';
-import './panchakarma.mjs?v=20';
-import './followup.mjs?v=20';
-import './reports.mjs?v=20';
-import './documents.mjs?v=20';
-import './review.mjs?v=20';
-import './backup.mjs?v=20';
-import {getAuthProvider} from './auth-context.mjs?v=20';
+import './clinical.mjs?v=21';
+import './prescription.mjs?v=21';
+import './panchakarma.mjs?v=21';
+import './followup.mjs?v=21';
+import './reports.mjs?v=21';
+import './documents.mjs?v=21';
+import './review.mjs?v=21';
+import './backup.mjs?v=21';
+import {getAuthProvider} from './auth-context.mjs?v=21';
 const section=document.getElementById('patients');
 document.querySelector('label[for="search"]').textContent='नाव, Patient ID, गाव किंवा मोबाइल';
 const panel=document.createElement('details');panel.className='panel';
@@ -30,7 +30,7 @@ const list=[];const results=document.getElementById('results');
 document.addEventListener('opd-samples-ready',e=>{for(const p of e.detail)if(!list.some(x=>x.id===p.id))list.push(p);update()});
 function update(){const from=document.getElementById('date-from').value,to=document.getElementById('date-to').value;if(from&&to&&from>to){results.textContent='सुरुवातीची तारीख शेवटच्या तारखेपूर्वी असावी.';return}document.dispatchEvent(new CustomEvent('opd-filtered',{detail:searchPatients(list,document.getElementById('search').value,from,to)}))}
 for(const id of ['search','date-from','date-to'])document.getElementById(id).addEventListener('input',update);
-async function syncCloud(){const auth=getAuthProvider(),user=auth?.current();if(!user){cloudStatus.textContent='पहिले Firebase login करा.';cloudButton.disabled=true;return}cloudButton.disabled=true;cloudStatus.textContent='Firebase मधून नमुना patient intake आणत आहे…';try{const remote=await auth.listPatientIntakes();for(const p of remote){const i=list.findIndex(x=>x.id===p.id);if(i<0){list.push(p);document.dispatchEvent(new CustomEvent('opd-added',{detail:p}))}else list[i]=p}const pending=list.filter(p=>p._cloudPending);for(const p of pending){const saved=await auth.savePatientIntake(p);Object.assign(p,saved,{_cloudPending:false})}update();cloudStatus.textContent=`Firebase sync पूर्ण · ${remote.length} cloud नोंदी व ${pending.length} नवीन नमुना नोंदी sync केल्या.`}catch{cloudStatus.textContent='Firebase sync अयशस्वी. Firestore rules publish आहेत का, इंटरनेट आणि सक्रिय user भूमिका तपासा.'}finally{cloudButton.disabled=false}}
+async function syncCloud(){const auth=getAuthProvider(),user=auth?.current();if(!user){cloudStatus.textContent='पहिले Firebase login करा.';cloudButton.disabled=true;return}cloudButton.disabled=true;cloudStatus.textContent='Firebase मधून नमुना patient intake आणत आहे…';try{const remote=await auth.listPatientIntakes();for(const p of remote){const i=list.findIndex(x=>x.id===p.id);if(i<0){list.push(p);document.dispatchEvent(new CustomEvent('opd-added',{detail:p}))}else {list[i]=p;document.dispatchEvent(new CustomEvent('opd-added',{detail:p}))}}const pending=list.filter(p=>p._cloudPending);for(const p of pending){const saved=await auth.savePatientIntake(p);Object.assign(p,saved,{_cloudPending:false})}update();cloudStatus.textContent=`Firebase sync पूर्ण · ${remote.length} cloud नोंदी व ${pending.length} नवीन नमुना नोंदी sync केल्या.`}catch{cloudStatus.textContent='Firebase sync अयशस्वी. Firestore rules publish आहेत का, इंटरनेट आणि सक्रिय user भूमिका तपासा.'}finally{cloudButton.disabled=false}}
 cloudButton.addEventListener('click',syncCloud);window.addEventListener('opd-auth-change',e=>{cloudButton.disabled=!e.detail;if(e.detail)syncCloud();else cloudStatus.textContent='Firebase login केल्यावर नमुना intake sync करता येईल.'});
 form.addEventListener('submit',async e=>{e.preventDefault();const p=Object.fromEntries(new FormData(form));for(const k of ['name','mobile','village'])p[k]=p[k].trim();const error=validatePatient(p);const status=document.getElementById('registration-status');if(error){status.textContent=error;return}
  const duplicate=list.find(x=>x.name===p.name&&x.mobile===p.mobile&&x.village===p.village);if(duplicate){status.textContent=`अशी नमुना नोंद आधीच आहे: ${duplicate.id}`;return}
