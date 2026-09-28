@@ -28,6 +28,6 @@ document.addEventListener('opd-case-open',event=>{
  draw(data);
  form.addEventListener('submit',e=>{e.preventDefault();const drugs=[...rows.children].map(row=>Object.fromEntries([...row.querySelectorAll('input')].map(input=>[input.name,input.value.trim()]))).filter(d=>Object.values(d).some(Boolean));
   if(drugs.some(d=>!d.name)){status.textContent='औषधाचे नाव भरा किंवा रिकामी औषध नोंद काढा.';return}
-  const next={diagnosis:diagnosis.value.trim(),advice:advice.value.trim(),followup:followup.value,drugs};prescriptions.set(id,next);draw(next);status.textContent='नमुना मसुदा या टॅबमध्ये जतन झाला. Refresh केल्यावर मिटेल. खालील केस पेपर प्रिंटमध्ये हा मसुदा दिसेल.';
+  const next={diagnosis:diagnosis.value.trim(),advice:advice.value.trim(),followup:followup.value,drugs};prescriptions.set(id,next);draw(next);document.dispatchEvent(new CustomEvent('opd-prescription-saved',{detail:{patient:event.detail,followup:next.followup}}));status.textContent='नमुना मसुदा या टॅबमध्ये जतन झाला. Refresh केल्यावर मिटेल. पुढील भेट फॉलो-अप यादीत दिसेल. खालील केस पेपर प्रिंटमध्ये हा मसुदा दिसेल.';
  });
 });
