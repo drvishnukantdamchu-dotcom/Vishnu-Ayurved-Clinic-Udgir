@@ -20,7 +20,7 @@ document.addEventListener('opd-case-open',event=>{
  const followup=field(form,'followup','पुढील भेटीची तारीख',data.followup);followup.type='date';
  const save=document.createElement('button');save.type='submit';save.textContent='नमुना मसुदा जतन करा';form.append(save);
  const status=document.createElement('p');status.setAttribute('role','status');form.append(status);const cloud=document.createElement('button');cloud.type='button';cloud.textContent='Firebase मधून नमुना प्रिस्क्रिप्शन उघडा';cloud.disabled=true;form.append(cloud);box.append(form);
- function applyRole(){const role=getAuthProvider()?.current()?.role||null;const clinician=!role||['owner','doctor'].includes(role);for(const el of form.querySelectorAll('input,textarea'))el.disabled=!clinician;save.disabled=!clinician;add.disabled=!clinician;cloud.disabled=!['owner','doctor'].includes(role);if(role==='student')status.textContent='विद्यार्थी login: प्रिस्क्रिप्शन नोंद/बदल करण्याचा अधिकार नाही.'}
+ function applyRole(){const role=getAuthProvider()?.current()?.role||null;const clinician=!role||['owner','doctor'].includes(role);for(const el of form.querySelectorAll('input,textarea'))el.disabled=!clinician;for(const button of form.querySelectorAll('button'))if(button!==cloud)button.disabled=!clinician;cloud.disabled=!['owner','doctor'].includes(role);if(role==='student')status.textContent='विद्यार्थी login: प्रिस्क्रिप्शन नोंद/बदल करण्याचा अधिकार नाही.'}
  applyRole();document.addEventListener('opd-auth-change',applyRole);
  function draw(d){summary.replaceChildren();const title=document.createElement('h2');title.textContent='प्रिस्क्रिप्शन मसुदा — उपचारासाठी वापरू नये';summary.append(title);
   function line(text){const p=document.createElement('p');p.textContent=text;summary.append(p);}
