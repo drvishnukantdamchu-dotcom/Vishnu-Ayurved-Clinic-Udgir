@@ -32,3 +32,19 @@ test('network failure leaves no session',async()=>{
  await assert.rejects(a.login('test@example.com','test'));
  assert.equal(a.current(),null);
 });
+test('clinical sync writes only synthetic patient intake with bearer auth',async()=>{
+ const calls=[];const responses=[{localId:'owner-uid',idToken:'session-token',refreshToken:'refresh',expiresIn:'3600'},doc('owner'),{name:'projects/test/databases/(default)/documents/patientIntakes/VAC-DEMO-1'}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('owner@example.com','secret');
+ await assert.rejects(a.savePatientIntake({id:'REAL-1',name:'Real patient'}),/SYNTHETIC_ONLY/);
+ const saved=await a.savePatientIntake({id:'VAC-DEMO-1',name:'Synthetic patient',type:'नवीन',visitDate:'2026-09-28'});
+ assert.equal(saved.id,'VAC-DEMO-1');assert.match(calls[2].url,/patientIntakes\/VAC-DEMO-1$/);assert.equal(calls[2].options.headers.Authorization,'Bearer session-token');
+ const fields=JSON.parse(calls[2].options.body).fields;assert.equal(fields.name.stringValue,'Synthetic patient');assert.equal(fields.createdBy.stringValue,'owner-uid');
+});
+test('student Firestore list query is constrained to authenticated UID',async()=>{
+ const calls=[];const responses=[{localId:'student-uid',idToken:'token',refreshToken:'refresh'},doc('student'),[]];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('student@example.com','secret');assert.deepEqual(await a.listPatientIntakes(),[]);
+ const query=JSON.parse(calls[2].options.body).structuredQuery;
+ assert.equal(query.where.fieldFilter.field.fieldPath,'createdBy');assert.equal(query.where.fieldFilter.value.stringValue,'student-uid');
+});

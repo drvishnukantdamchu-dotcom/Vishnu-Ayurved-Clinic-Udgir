@@ -1,12 +1,48 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Phase 2: roles are provisioned through the trusted console, never by the client.
+    // Roles are provisioned through the trusted console, never by this client.
+    function signedIn() { return request.auth != null; }
+    function member() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
+    }
+    function role() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
+    function doctorOrOwner() { return member() && role() in ['owner', 'doctor']; }
+    function student() { return member() && role() == 'student'; }
+    function validIntake(data, documentId) {
+      return data.keys().hasAll(['id','createdBy','name','age','gender','village','mobile','visitDate','type','enteredAt','createdAt','updatedAt'])
+        && data.keys().hasOnly(['id','createdBy','name','age','gender','village','mobile','visitDate','type','enteredAt','createdAt','updatedAt'])
+        && data.id == documentId
+        && data.createdBy is string
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
+        && data.age is string && data.age.size() <= 3
+        && data.gender is string && data.gender.size() <= 20
+        && data.village is string && data.village.size() <= 100
+        && data.mobile is string && data.mobile.size() <= 10
+        && data.visitDate is string && data.visitDate.size() == 10
+        && data.type in ['नवीन','फॉलो-अप']
+        && data.enteredAt is string && data.createdAt is string && data.updatedAt is string;
+    }
+    match /patientIntakes/{intakeId} {
+      // Students query only records where createdBy equals their signed-in UID.
+      allow get, list: if doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid);
+      allow create: if validIntake(request.resource.data, intakeId)
+        && (doctorOrOwner() || (student() && request.resource.data.createdBy == request.auth.uid));
+      allow update: if validIntake(request.resource.data, intakeId)
+        && (doctorOrOwner() || (student()
+          && resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','age','gender','village','mobile','visitDate','type','enteredAt','updatedAt'])));
+      allow delete: if member() && role() == 'owner';
+    }
+    // User roles remain console-provisioned. No client-side role changes.
     match /users/{uid} {
-      allow get: if request.auth != null && request.auth.uid == uid;
+      allow get: if signedIn() && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
-    // Patient collections remain inaccessible until separately validated clinical rules ship.
+    // Prescriptions, examinations, images and all other collections stay closed.
     match /{document=**} {
       allow read, write: if false;
     }

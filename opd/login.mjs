@@ -1,4 +1,5 @@
 import {createAuth, permissions} from './auth.mjs';
+import {setAuthProvider} from './auth-context.mjs';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
@@ -6,23 +7,24 @@ panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
 <form id="auth-form"><label for="auth-email">वापरकर्त्याचा ईमेल</label><input id="auth-email" type="email" autocomplete="username" required disabled>
 <label for="auth-password">पासवर्ड</label><input id="auth-password" type="password" autocomplete="current-password" required disabled>
 <div class="actions"><button id="auth-submit" type="submit" disabled>लॉगिन तपासा</button><button id="auth-out" type="button" hidden>लॉगआउट</button></div></form>
-<p id="auth-role"></p><p class="muted">हे login connection परीक्षण आहे. रुग्णांचा डेटाबेस अद्याप बंद आहे. स्वतः नोंदणी करून Admin अधिकार मिळत नाहीत.</p>`;
+<p id="auth-role"></p><p class="muted">या टप्प्यात Cloudमध्ये फक्त काल्पनिक Patient Intake sync होईल. केस-टेकिंग, प्रिस्क्रिप्शन, फाइल्स आणि पंचकर्म Cloud access बंद आहे. स्वतः नोंदणी करून Admin अधिकार मिळत नाहीत.</p>`;
 document.getElementById('settings').prepend(panel);
 const status=panel.querySelector('#auth-status'), form=panel.querySelector('form');
 const controls=[...form.querySelectorAll('input'),panel.querySelector('#auth-submit')];
 const out=panel.querySelector('#auth-out'),roleLabel=panel.querySelector('#auth-role');
 let auth;
-function reset(message){auth?.logout();form.reset();roleLabel.textContent='';out.hidden=true;controls.forEach(e=>e.disabled=!auth?.configured);status.textContent=message;}
+function reset(message){auth?.logout();setAuthProvider(auth||null);window.dispatchEvent(new CustomEvent('opd-auth-change',{detail:null}));form.reset();roleLabel.textContent='';out.hidden=true;controls.forEach(e=>e.disabled=!auth?.configured);status.textContent=message;}
 try {
  const response=await fetch('./firebase-config.json',{cache:'no-store'});
  if(!response.ok)throw new Error('CONFIG');
  auth=createAuth(await response.json());
- reset(auth.configured?'लॉगिन जोडणी तपासता येईल; clinical access बंद आहे.':'Firebase project जोडलेला नाही. लॉगिन सध्या बंद आहे.');
+ reset(auth.configured?'Login तयार. Patient Intake syncसाठी नवीन Firestore rules आधी publish करा.':'Firebase project जोडलेला नाही. लॉगिन सध्या बंद आहे.');
 }catch{reset('Configuration उपलब्ध नाही. सुरक्षिततेसाठी लॉगिन बंद आहे.');}
 form.addEventListener('submit',async e=>{
  e.preventDefault();controls.forEach(c=>c.disabled=true);status.textContent='ओळख व परवानगी तपासत आहे…';
  try{
   const user=await auth.login(panel.querySelector('#auth-email').value,panel.querySelector('#auth-password').value);
+  setAuthProvider(auth);window.dispatchEvent(new CustomEvent('opd-auth-change',{detail:user}));
   const p=permissions(user.role);
   status.textContent='ओळख पडताळली. हा अजून demo workspace आहे.';
   roleLabel.textContent=`भूमिका: ${user.role} · Clinical approval: ${p.approveClinical?'हो':'नाही'} · User management: ${p.manageUsers?'हो':'नाही'}`;

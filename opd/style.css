@@ -6,6 +6,7 @@ textarea{display:block;width:100%;min-height:90px;font:inherit;padding:12px;bord
 .row .prescription-open{margin-left:0;background:#174b3d;color:white}.row{flex-wrap:wrap}
 .report-table{overflow:auto;margin-top:16px}.report-table table{width:100%;border-collapse:collapse;background:#fff}.report-table th,.report-table td{padding:9px 12px;text-align:left;border-bottom:1px solid #dce5df}.report-table th{background:#eaf3ed}.report-filters{margin-bottom:18px}
 .document-section{border-top:1px solid #dce5df;margin-top:22px;padding-top:16px}.document-row{align-items:flex-start}.document-row span{flex:1;min-width:180px}.document-row a{color:#174b3d;padding:8px}
+.cloud-tools{border-top:1px solid #dce5df;margin-top:14px;padding-top:12px}.cloud-tools button:disabled{opacity:.55;cursor:not-allowed}
 @media print{
  @page{size:A4 portrait;margin:12mm}
  html,body{width:auto!important;height:auto!important;background:#fff!important;color:#111!important;font-family:'Noto Sans Devanagari','Mukta',Arial,sans-serif!important;font-size:10pt!important;line-height:1.35!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
