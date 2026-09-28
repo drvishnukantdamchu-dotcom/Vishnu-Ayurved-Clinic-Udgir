@@ -22,6 +22,7 @@ document.addEventListener('opd-case-open',e=>{
  for(const [key,label] of fields){const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.name=key;input.maxLength=1000;input.value=saved.values[key]||'';l.append(input);grid.append(l)}form.append(grid);
  const button=document.createElement('button');button.type='submit';button.textContent='नमुना केस नोंद जतन करा';form.append(button);
  const status=document.createElement('p');status.setAttribute('role','status');form.append(status);box.append(form);
+ const forward=document.createElement('button');forward.type='button';forward.textContent='डॉक्टरांकडे पुनरावलोकनासाठी पाठवा';form.append(forward);
  function draw(data){summary.replaceChildren();const h=document.createElement('h2');h.textContent='नोंदवलेले परीक्षण · नमुना';summary.append(h);
   const lines=data.complaints.filter(c=>c.text).map((c,i)=>`${i+1}. ${c.text} · कालावधी: ${c.duration||'नोंद नाही'} · तीव्रता: ${c.severity||'नोंद नाही'}`);
   for(const [key,label] of fields)if(data.values[key])lines.push(`${label}: ${data.values[key]}`);
@@ -34,4 +35,5 @@ document.addEventListener('opd-case-open',e=>{
   const values=Object.fromEntries(new FormData(form));
   const data={complaints,values};drafts.set(patient.id,data);draw(data);status.textContent='या टॅबमध्ये नमुना केस जतन केला. आता खालील प्रिंट बटण वापरा. Refresh केल्यावर नोंद मिटेल.';
  });
+ forward.addEventListener('click',()=>{const data=drafts.get(patient.id);if(!data){status.textContent='आधी नमुना केस नोंद जतन करा.';return}document.dispatchEvent(new CustomEvent('opd-clinical-review-submit',{detail:{patient,data,submittedAt:new Date().toISOString()}}));status.textContent='नमुना केस डॉक्टर पुनरावलोकन यादीत पाठवली. ही माहिती फक्त या टॅबमध्ये राहते.'});
 });
