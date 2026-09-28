@@ -3,6 +3,7 @@ import './clinical.mjs';
 import './prescription.mjs';
 import './panchakarma.mjs';
 import './followup.mjs';
+import './reports.mjs';
 const section=document.getElementById('patients');
 document.querySelector('label[for="search"]').textContent='नाव, Patient ID, गाव किंवा मोबाइल';
 const panel=document.createElement('details');panel.className='panel';

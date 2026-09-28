@@ -12,7 +12,7 @@ document.addEventListener('opd-filtered',e=>render(document.getElementById('resu
 document.addEventListener('opd-open-patient',e=>showCase(e.detail));
 document.addEventListener('opd-added',e=>{samples.push(e.detail);render(document.getElementById('queue'),samples);document.querySelector('.stats article strong').textContent=String(samples.length);document.querySelectorAll('.stats article strong')[1].textContent=String(samples.filter(p=>p.type==='नवीन').length)});
 document.addEventListener('DOMContentLoaded',()=>document.dispatchEvent(new CustomEvent('opd-samples-ready',{detail:samples})));
-document.getElementById('close').onclick=()=>document.getElementById('case').close();document.getElementById('print').onclick=()=>window.print();
+document.getElementById('close').onclick=()=>document.getElementById('case').close();document.getElementById('print').textContent='A4 प्रिंट / PDF';document.getElementById('print').onclick=()=>window.print();
 const originalShowCase=showCase;
 showCase=function(p){originalShowCase(p);for(const [label,value] of [['भेटीची तारीख',p.visitDate],['वय',p.age],['लिंग',p.gender],['मोबाइल',p.mobile],['नोंद केल्याची वेळ',p.enteredAt]])if(value){const line=document.createElement('p');line.textContent=label+': '+value;document.getElementById('case-content').append(line)}document.dispatchEvent(new CustomEvent('opd-case-open',{detail:p}))};
 document.getElementById('date').textContent=new Intl.DateTimeFormat('mr-IN',{dateStyle:'full',timeZone:'Asia/Kolkata'}).format(new Date());
