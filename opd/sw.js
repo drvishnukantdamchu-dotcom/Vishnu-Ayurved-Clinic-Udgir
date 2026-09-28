@@ -1,6 +1,6 @@
-const CACHE='vac-opd-shell-v13';
+const CACHE='vac-opd-shell-v14';
 const SHELL=['./','./index.html','./style.css','./app.js','./auth.mjs','./login.mjs','./registration.mjs','./patient-model.mjs','./manifest.webmanifest','./icon-192.png','./icon-512.png','../images/logo-restored-20260926.webp','../images/header-restored-20260926.webp','../images/doctor-restored-20260926.webp'];
-SHELL.push('./clinical.mjs','./prescription.mjs','./panchakarma.mjs','./followup.mjs','./reports.mjs','./documents.mjs','./review.mjs','./auth-context.mjs','./app.js?v=13','./login.mjs?v=13','./registration.mjs?v=13','./auth.mjs?v=13','./auth-context.mjs?v=13','./clinical.mjs?v=13','./prescription.mjs?v=13','./panchakarma.mjs?v=13','./followup.mjs?v=13','./reports.mjs?v=13','./documents.mjs?v=13','./review.mjs?v=13');
+SHELL.push('./clinical.mjs','./prescription.mjs','./panchakarma.mjs','./followup.mjs','./reports.mjs','./documents.mjs','./review.mjs','./auth-context.mjs','./app.js?v=14','./login.mjs?v=14','./registration.mjs?v=14','./auth.mjs?v=14','./auth-context.mjs?v=14','./clinical.mjs?v=14','./prescription.mjs?v=14','./panchakarma.mjs?v=14','./followup.mjs?v=14','./reports.mjs?v=14','./documents.mjs?v=14','./review.mjs?v=14');
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL))));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('vac-opd-shell-')&&k!==CACHE).map(k=>caches.delete(k))))));
 self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const url=new URL(e.request.url);if(!SHELL.some(p=>new URL(p,self.location.href).href===url.href))return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)))});

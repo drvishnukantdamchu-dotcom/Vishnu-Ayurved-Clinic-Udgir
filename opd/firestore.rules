@@ -14,7 +14,7 @@ service cloud.firestore {
     function validIntake(data, documentId) {
       return data.keys().hasAll(['id','createdBy','name','age','gender','village','mobile','visitDate','type','enteredAt','createdAt','updatedAt'])
         && data.keys().hasOnly(['id','createdBy','name','age','gender','village','mobile','visitDate','type','enteredAt','createdAt','updatedAt'])
-        && data.id == documentId
+        && data.id == documentId && data.id.matches('VAC-DEMO-[A-Za-z0-9_-]{1,140}')
         && data.createdBy is string
         && data.name is string && data.name.size() > 0 && data.name.size() <= 100
         && data.age is string && data.age.size() <= 3
@@ -29,11 +29,12 @@ service cloud.firestore {
       // Students query only records where createdBy equals their signed-in UID.
       allow get, list: if doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid);
       allow create: if validIntake(request.resource.data, intakeId)
-        && (doctorOrOwner() || (student() && request.resource.data.createdBy == request.auth.uid));
+        && request.resource.data.createdBy == request.auth.uid
+        && (doctorOrOwner() || student());
       allow update: if validIntake(request.resource.data, intakeId)
+        && request.resource.data.createdBy == resource.data.createdBy
         && (doctorOrOwner() || (student()
           && resource.data.createdBy == request.auth.uid
-          && request.resource.data.createdBy == resource.data.createdBy
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','age','gender','village','mobile','visitDate','type','enteredAt','updatedAt'])));
       allow delete: if member() && role() == 'owner';
     }

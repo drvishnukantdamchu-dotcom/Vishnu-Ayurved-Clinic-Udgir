@@ -81,7 +81,7 @@ export function createAuth(config, request = fetch) {
       if(!session)throw new Error('SESSION_EXPIRED');
       if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(record?.id)||!record?.name)throw new Error('SYNTHETIC_ONLY');
       const now=new Date().toISOString();
-      const intake={id:record.id,createdBy:session.uid,name:String(record.name).slice(0,100),age:String(record.age||''),gender:String(record.gender||''),village:String(record.village||'').slice(0,100),mobile:String(record.mobile||''),visitDate:String(record.visitDate||''),type:String(record.type||'नवीन'),enteredAt:String(record.enteredAt||now),createdAt:String(record.createdAt||now),updatedAt:now};
+      const intake={id:record.id,createdBy:String(record.createdBy||session.uid),name:String(record.name).slice(0,100),age:String(record.age||''),gender:String(record.gender||''),village:String(record.village||'').slice(0,100),mobile:String(record.mobile||''),visitDate:String(record.visitDate||''),type:String(record.type||'नवीन'),enteredAt:String(record.enteredAt||now),createdAt:String(record.createdAt||now),updatedAt:now};
       const fields=Object.fromEntries(Object.entries(intake).map(([k,v])=>[k,toValue(v)]));
       const result=await firestore(`patientIntakes/${encodeURIComponent(record.id)}`,{method:'PATCH',body:{fields}});
       return {...intake,id:result.name?.split('/').at(-1)||intake.id};
