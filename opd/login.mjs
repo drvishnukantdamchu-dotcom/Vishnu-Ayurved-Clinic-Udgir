@@ -1,5 +1,5 @@
-import {createAuth, permissions} from './auth.mjs?v=14';
-import {setAuthProvider} from './auth-context.mjs?v=14';
+import {createAuth, permissions} from './auth.mjs?v=15';
+import {setAuthProvider} from './auth-context.mjs?v=15';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>

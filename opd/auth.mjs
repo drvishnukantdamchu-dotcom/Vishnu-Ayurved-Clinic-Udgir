@@ -36,8 +36,10 @@ export function createAuth(config, request = fetch) {
     return session.idToken;
   }
   function firestorePath(path) {
-    if(!/^patientIntakes(?::runQuery|\/[A-Za-z0-9_-]{1,150})?$/.test(path))throw new Error('PATH_DENIED');
-    return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents/${path}`;
+    const documents=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents`;
+    if(path==='patientIntakes:runQuery')return `${documents}:runQuery`;
+    if(/^patientIntakes\/[A-Za-z0-9_-]{1,150}$/.test(path))return `${documents}/${path}`;
+    throw new Error('PATH_DENIED');
   }
   async function firestore(path,{method='GET',body}={}) {
     const token=await validToken();

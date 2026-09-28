@@ -45,6 +45,7 @@ test('student Firestore list query is constrained to authenticated UID',async()=
  const calls=[];const responses=[{localId:'student-uid',idToken:'token',refreshToken:'refresh'},doc('student'),[]];
  const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
  await a.login('student@example.com','secret');assert.deepEqual(await a.listPatientIntakes(),[]);
+ assert.match(calls[2].url,/\/documents:runQuery$/);
  const query=JSON.parse(calls[2].options.body).structuredQuery;
  assert.equal(query.where.fieldFilter.field.fieldPath,'createdBy');assert.equal(query.where.fieldFilter.value.stringValue,'student-uid');
 });
