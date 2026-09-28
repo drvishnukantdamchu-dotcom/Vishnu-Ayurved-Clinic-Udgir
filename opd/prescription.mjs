@@ -1,4 +1,4 @@
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=18';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=19';
 // Demo drafts only: no approvals, recommendations, signatures or persistent records.
 const prescriptions=new Map();
 const drugFields=[['name','औषधाचे नाव'],['form','प्रकार (वटी / चूर्ण / क्वाथ / इतर)'],['dose','मात्रा व एकक (गोळी / g / ml)'],['times','वेळा (सकाळ / दुपार / संध्याकाळ / रात्र)'],['food','जेवणाशी संबंध / झोपताना'],['vehicle','अनुपान'],['duration','कालावधी'],['site','बाह्य वापराची जागा व पद्धत']];

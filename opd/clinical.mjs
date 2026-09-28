@@ -1,4 +1,5 @@
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=18';
+import {getAuthProvider} from './auth-context.mjs?v=19';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=19';
 // Synthetic-only case-taking drafts. No localStorage, cloud writes or clinical advice.
 const drafts=new Map();
 const fields=[['bp','BP (mmHg)'],['pulse','Pulse (/min)'],['spo2','SpO₂ (%)'],['temperature','तापमान (°C)'],['weight','वजन (kg)'],['allergy','ॲलर्जी'],['history','पूर्वव्याधी / औषधांचा इतिहास'],['surgery','शस्त्रक्रिया / पूर्वीचे admission'],['addiction','व्यसनाची नोंद'],['nadi','नाडी'],['urine','मूत्र'],['stool','मल'],['tongue','जिह्वा'],['voice','शब्द'],['touch','स्पर्श'],['eyes','दृक्'],['build','आकृती'],['agni','अग्नी'],['strength','बल'],['notes','इतर निरीक्षणे']];
@@ -22,7 +23,7 @@ document.addEventListener('opd-case-open',e=>{
  const grid=document.createElement('div');grid.className='form-grid';
  for(const [key,label] of fields){const l=document.createElement('label');l.textContent=label;const input=document.createElement('input');input.name=key;input.maxLength=1000;input.value=saved.values[key]||'';l.append(input);grid.append(l)}form.append(grid);
  const button=document.createElement('button');button.type='submit';button.textContent='नमुना केस नोंद जतन करा';form.append(button);
- const status=document.createElement('p');status.setAttribute('role','status');form.append(status);box.append(form);
+ const status=document.createElement('p');status.setAttribute('role','status');form.append(status);const cloud=document.createElement('button');cloud.type='button';cloud.textContent='Firebase मधून नमुना तपासणी उघडा';cloud.disabled=true;form.append(cloud);box.append(form);
  const forward=document.createElement('button');forward.type='button';forward.textContent='डॉक्टरांकडे पुनरावलोकनासाठी पाठवा';form.append(forward);
  function draw(data){summary.replaceChildren();const h=document.createElement('h2');h.textContent='नोंदवलेले परीक्षण · नमुना';summary.append(h);
   const lines=data.complaints.filter(c=>c.text).map((c,i)=>`${i+1}. ${c.text} · कालावधी: ${c.duration||'नोंद नाही'} · तीव्रता: ${c.severity||'नोंद नाही'}`);
@@ -30,11 +31,12 @@ document.addEventListener('opd-case-open',e=>{
   if(!lines.length)lines.push('परीक्षणाची नोंद अद्याप केलेली नाही.');
   for(const text of lines){const p=document.createElement('p');p.textContent=text;summary.append(p)}
  }
- draw(saved);getDemo('clinical',patient.id).then(stored=>{if(!stored||drafts.has(patient.id))return;drafts.set(patient.id,stored);for(const row of [...rows.children])row.remove();(stored.complaints||[]).forEach(addComplaint);for(const [key] of fields)form.elements[key].value=stored.values?.[key]||'';draw(stored)}).catch(()=>{status.textContent='या ब्राउझरमध्ये स्थानिक साठवण उपलब्ध नाही.'});
+ draw(saved);getDemo('clinical',patient.id).then(stored=>{if(!stored||drafts.has(patient.id))return;drafts.set(patient.id,stored);for(const row of [...rows.children])row.remove();(stored.complaints||[]).forEach(addComplaint);for(const [key] of fields)form.elements[key].value=stored.values?.[key]||'';draw(stored);cloud.disabled=false}).then(()=>{cloud.disabled=false}).catch(()=>{status.textContent='या ब्राउझरमध्ये स्थानिक साठवण उपलब्ध नाही.'});
  form.addEventListener('submit',async event=>{event.preventDefault();const complaints=[...rows.children].map(row=>Object.fromEntries([...row.querySelectorAll('input')].map(input=>[input.dataset.key,input.value.trim()])));
   if(complaints.some(c=>!c.text&&(c.duration||c.severity))){status.textContent='कालावधी किंवा तीव्रतेसोबत तक्रारीचे नाव भरा.';return}
   const values=Object.fromEntries(new FormData(form));
-  const data={complaints,values};try{await putDemo('clinical',patient.id,data);drafts.set(patient.id,data);draw(data);status.textContent='काल्पनिक केस या डिव्हाइसवर जतन झाला.'}catch{status.textContent='जतन झाले नाही; ब्राउझर साठवण तपासा.'};
+  const data={complaints,values};try{await putDemo('clinical',patient.id,data);drafts.set(patient.id,data);draw(data);status.textContent='काल्पनिक केस या डिव्हाइसवर जतन झाला.';const auth=getAuthProvider();if(auth?.current()){try{await auth.saveDemoClinical(patient.id,data);status.textContent='काल्पनिक तपासणी या डिव्हाइसवर आणि Firebase मध्ये जतन झाली.'}catch{status.textContent='स्थानिक जतन झाले; Firebase sync अयशस्वी. नियम/नेटवर्क तपासा आणि पुन्हा जतन करा.'}}}catch{status.textContent='जतन झाले नाही; ब्राउझर साठवण तपासा.'};
  });
+ cloud.addEventListener('click',async()=>{const auth=getAuthProvider();if(!auth?.current()){status.textContent='Firebase login करा.';return}cloud.disabled=true;try{const remote=await auth.loadDemoClinical(patient.id);if(drafts.has(patient.id)&&!confirm('Firebase वरील काल्पनिक तपासणी या डिव्हाइसवरील मसुद्यावर लिहायची?'))return;await putDemo('clinical',patient.id,remote.payload);drafts.set(patient.id,remote.payload);rows.replaceChildren();remote.payload.complaints.forEach(addComplaint);for(const [key] of fields)form.elements[key].value=remote.payload.values[key]||'';draw(remote.payload);status.textContent='Firebase वरील काल्पनिक तपासणी उघडली.'}catch{status.textContent='Firebase वर ही तपासणी सापडली नाही किंवा परवानगी नाही.'}finally{cloud.disabled=false}});
  forward.addEventListener('click',()=>{const data=drafts.get(patient.id);if(!data){status.textContent='आधी नमुना केस नोंद जतन करा.';return}document.dispatchEvent(new CustomEvent('opd-clinical-review-submit',{detail:{patient,data,submittedAt:new Date().toISOString()}}));status.textContent='नमुना केस डॉक्टर पुनरावलोकन यादीत पाठवली. ही पुनरावलोकन यादी refresh झाल्यावर मिटते.'});
 });

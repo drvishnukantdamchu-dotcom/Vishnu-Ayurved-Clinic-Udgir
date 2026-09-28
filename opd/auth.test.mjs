@@ -49,3 +49,11 @@ test('student Firestore list query is constrained to authenticated UID',async()=
  const query=JSON.parse(calls[2].options.body).structuredQuery;
  assert.equal(query.where.fieldFilter.field.fieldPath,'createdBy');assert.equal(query.where.fieldFilter.value.stringValue,'student-uid');
 });
+test('synthetic clinical draft uses authenticated patient document and immutable author',async()=>{
+ const calls=[];const responses=[{localId:'doctor-uid',idToken:'token',refreshToken:'refresh'},doc('doctor'),{fields:{id:{stringValue:'VAC-DEMO-1'},createdBy:{stringValue:'student-uid'},payload:{mapValue:{fields:{complaints:{arrayValue:{values:[]}},values:{mapValue:{fields:{}}}}}},updatedAt:{stringValue:'2026-09-28T00:00:00Z'}}},{name:'projects/test/databases/(default)/documents/demoClinical/VAC-DEMO-1'}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('doctor@example.com','secret');await assert.rejects(a.saveDemoClinical('REAL-1',{complaints:[],values:{}}),/SYNTHETIC_ONLY/);
+ const saved=await a.saveDemoClinical('VAC-DEMO-1',{complaints:[{text:'demo',duration:'',severity:''}],values:{bp:'120/80'}});
+ assert.equal(saved.createdBy,'student-uid');assert.match(calls[2].url,/demoClinical\/VAC-DEMO-1$/);assert.equal(calls[3].options.headers.Authorization,'Bearer token');
+ const written=JSON.parse(calls[3].options.body).fields;assert.equal(written.createdBy.stringValue,'student-uid');assert.equal(written.payload.mapValue.fields.values.mapValue.fields.bp.stringValue,'120/80');
+});

@@ -38,6 +38,7 @@ export function createAuth(config, request = fetch) {
   function firestorePath(path) {
     const documents=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents`;
     if(path==='patientIntakes:runQuery')return `${documents}:runQuery`;
+    if(/^demoClinical\/VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
     if(/^patientIntakes\/[A-Za-z0-9_-]{1,150}$/.test(path))return `${documents}/${path}`;
     throw new Error('PATH_DENIED');
   }
@@ -87,6 +88,26 @@ export function createAuth(config, request = fetch) {
       const fields=Object.fromEntries(Object.entries(intake).map(([k,v])=>[k,toValue(v)]));
       const result=await firestore(`patientIntakes/${encodeURIComponent(record.id)}`,{method:'PATCH',body:{fields}});
       return {...intake,id:result.name?.split('/').at(-1)||intake.id};
+    },
+    async loadDemoClinical(id){
+      if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(id))throw new Error('SYNTHETIC_ONLY');
+      const row=await firestore(`demoClinical/${id}`);
+      const data=Object.fromEntries(Object.entries(row.fields||{}).map(([k,v])=>[k,fromValue(v)]));
+      if(data.id!==id||!data.payload||!Array.isArray(data.payload.complaints))throw new Error('INVALID_RECORD');
+      return data;
+    },
+    async saveDemoClinical(id,payload){
+      if(!session)throw new Error('SESSION_EXPIRED');
+      if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(id)||!Array.isArray(payload?.complaints)||typeof payload?.values!=='object')throw new Error('SYNTHETIC_ONLY');
+      if(payload.complaints.length>10||JSON.stringify(payload).length>25000)throw new Error('RECORD_TOO_LARGE');
+      // Determine the original author before an update. Never claim another author's draft.
+      let author=session.uid;
+      try{const prior=await this.loadDemoClinical(id);author=prior.createdBy;if(session.role==='student'&&author!==session.uid)throw new Error('ACCESS_DENIED')}
+      catch(error){if(error.message==='ACCESS_DENIED')throw error;if(error.message!=='AUTH_FAILED')throw error}
+      const record={id,createdBy:author,payload,updatedAt:new Date().toISOString()};
+      const fields=Object.fromEntries(Object.entries(record).map(([k,v])=>[k,toValue(v)]));
+      await firestore(`demoClinical/${id}`,{method:'PATCH',body:{fields}});
+      return record;
     },
     async login(email, password) {
       session = null;

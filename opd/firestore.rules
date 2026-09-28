@@ -38,12 +38,40 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','age','gender','village','mobile','visitDate','type','enteredAt','updatedAt'])));
       allow delete: if member() && role() == 'owner';
     }
+    // Synthetic case-taking drafts only. No real patient records.
+    function validDemoClinical(data, documentId) {
+      return data.keys().hasAll(['id','createdBy','payload','updatedAt'])
+        && data.keys().hasOnly(['id','createdBy','payload','updatedAt'])
+        && data.id == documentId
+        && data.id.matches('VAC-DEMO-[A-Za-z0-9_-]{1,140}')
+        && data.createdBy is string
+        && data.updatedAt is string
+        && data.updatedAt.size() <= 40
+        && data.payload is map
+        && data.payload.keys().hasAll(['complaints','values'])
+        && data.payload.keys().hasOnly(['complaints','values'])
+        && data.payload.complaints is list
+        && data.payload.complaints.size() <= 10
+        && data.payload.values is map
+        && data.payload.values.keys().hasOnly(['bp','pulse','spo2','temperature','weight','allergy','history','surgery','addiction','nadi','urine','stool','tongue','voice','touch','eyes','build','agni','strength','notes']);
+    }
+    match /demoClinical/{patientId} {
+      allow get: if doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid);
+      allow list: if false;
+      allow create: if validDemoClinical(request.resource.data,patientId)
+        && request.resource.data.createdBy == request.auth.uid
+        && (doctorOrOwner() || student());
+      allow update: if validDemoClinical(request.resource.data,patientId)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && (doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid));
+      allow delete: if member() && role() == 'owner';
+    }
     // User roles remain console-provisioned. No client-side role changes.
     match /users/{uid} {
       allow get: if signedIn() && request.auth.uid == uid;
       allow list, create, update, delete: if false;
     }
-    // Prescriptions, examinations, images and all other collections stay closed.
+    // Prescriptions, images and all other collections stay closed.
     match /{document=**} {
       allow read, write: if false;
     }
