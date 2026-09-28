@@ -11,7 +11,7 @@ document.addEventListener('opd-added',e=>{samples.push(e.detail);render(document
 document.addEventListener('DOMContentLoaded',()=>document.dispatchEvent(new CustomEvent('opd-samples-ready',{detail:samples})));
 document.getElementById('close').onclick=()=>document.getElementById('case').close();document.getElementById('print').onclick=()=>window.print();
 const originalShowCase=showCase;
-showCase=function(p){originalShowCase(p);for(const [label,value] of [['भेटीची तारीख',p.visitDate],['वय',p.age],['लिंग',p.gender],['मोबाइल',p.mobile],['नोंद केल्याची वेळ',p.enteredAt]])if(value){const line=document.createElement('p');line.textContent=label+': '+value;document.getElementById('case-content').append(line)}};
+showCase=function(p){originalShowCase(p);for(const [label,value] of [['भेटीची तारीख',p.visitDate],['वय',p.age],['लिंग',p.gender],['मोबाइल',p.mobile],['नोंद केल्याची वेळ',p.enteredAt]])if(value){const line=document.createElement('p');line.textContent=label+': '+value;document.getElementById('case-content').append(line)}document.dispatchEvent(new CustomEvent('opd-case-open',{detail:p}))};
 document.getElementById('date').textContent=new Intl.DateTimeFormat('mr-IN',{dateStyle:'full',timeZone:'Asia/Kolkata'}).format(new Date());
 document.getElementById('text-size').onclick=e=>{const active=document.body.classList.toggle('large');e.target.setAttribute('aria-pressed',String(active))};
 const month=document.getElementById('month');month.value=new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',timeZone:'Asia/Kolkata'}).format(new Date()).replace('/','-');function report(){document.getElementById('report-note').textContent=`निवड: ${month.value || 'महिना निवडा'} · प्रत्यक्ष डेटाबेस अद्याप जोडलेला नाही.`}month.onchange=report;report();
