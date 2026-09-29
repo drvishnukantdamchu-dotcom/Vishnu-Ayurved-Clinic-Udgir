@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createAuth, acceptedRole, permissions} from './auth.mjs';
+import {createAuth, acceptedRole, permissions, firebaseErrorMessage} from './auth.mjs';
 const doc=(role,active=true)=>({fields:{role:{stringValue:role},active:{booleanValue:active}}});
 test('unknown, missing and inactive roles denied',()=>{
  for(const d of [null,{},doc('admin'),doc('owner',false)]) assert.equal(acceptedRole(d),null);
@@ -73,4 +73,20 @@ test('doctor saves prescription only to synthetic prescription path',async()=>{
  assert.equal(saved.createdBy,'doctor-uid');
  assert.match(calls.at(-1).url,/demoPrescriptions\/VAC-DEMO-1$/);
  assert.equal(JSON.parse(calls.at(-1).options.body).fields.payload.mapValue.fields.drugs.arrayValue.values.length,1);
+});
+
+test('student case draft sync creates without a forbidden read, authored to signed-in UID',async()=>{
+ const calls=[];const responses=[{localId:'student-uid',idToken:'token'},doc('student'),{name:'projects/test/databases/(default)/documents/demoClinical/VAC-DEMO-NEW'}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('student@example.com','secret');
+ const saved=await a.saveDemoClinical('VAC-DEMO-NEW',{complaints:[],values:{bp:'120/80'}});
+ assert.equal(saved.createdBy,'student-uid');
+ assert.match(calls.at(-1).url,/demoClinical\/VAC-DEMO-NEW$/);
+ assert.equal(calls.length,3,'only login, role lookup, and PATCH; no denied draft GET');
+ assert.equal(JSON.parse(calls.at(-1).options.body).fields.createdBy.stringValue,'student-uid');
+});
+test('Firebase REST permission errors are surfaced as useful safe diagnostics',async()=>{
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async()=>({ok:false,status:403,json:async()=>({error:{status:'PERMISSION_DENIED',message:'private body omitted'}})}));
+ await assert.rejects(a.login('x@example.com','secret'),e=>e.code==='PERMISSION_DENIED'&&!String(e).includes('private body'));
+ assert.match(firebaseErrorMessage(Object.assign(new Error('PERMISSION_DENIED'),{code:'PERMISSION_DENIED'})),/Rules.*UID/);
 });

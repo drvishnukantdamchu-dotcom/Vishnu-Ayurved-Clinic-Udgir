@@ -1,5 +1,5 @@
-import {createAuth, permissions} from './auth.mjs?v=21';
-import {setAuthProvider} from './auth-context.mjs?v=21';
+import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=22';
+import {setAuthProvider} from './auth-context.mjs?v=22';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
@@ -29,7 +29,7 @@ form.addEventListener('submit',async e=>{
   status.textContent='ओळख पडताळली. हा अजून demo workspace आहे.';
   roleLabel.textContent=`भूमिका: ${user.role} · Clinical approval: ${p.approveClinical?'हो':'नाही'} · User management: ${p.manageUsers?'हो':'नाही'}`;
   form.reset();out.hidden=false;
- }catch{reset('लॉगिन झाले नाही. ईमेल, पासवर्ड, खाते सक्रियता आणि दिलेले अधिकार तपासा.');}
+ }catch(error){reset('लॉगिन झाले नाही. '+firebaseErrorMessage(error));}
  finally{panel.querySelector('#auth-password').value='';}
 });
 out.onclick=()=>reset('लॉगआउट झाले.');

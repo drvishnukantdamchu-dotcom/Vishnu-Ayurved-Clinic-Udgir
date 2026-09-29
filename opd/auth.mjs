@@ -14,23 +14,56 @@ export function permissions(role) {
     restoreBackup: role === 'owner'
   });
 }
+export function firebaseErrorMessage(error) {
+  const code=String(error?.code||error?.message||'UNKNOWN_ERROR').replace(/[^A-Za-z0-9_]/g,'').toUpperCase();
+  const messages={
+    INVALID_LOGIN_CREDENTIALS:'ईमेल/पासवर्ड जुळत नाहीत. Firebase Authentication मधील Email/Password provider सुरू आहे का ते तपासा.',
+    EMAIL_NOT_FOUND:'हा ईमेल Firebase Authentication Users मध्ये नाही.',
+    INVALID_PASSWORD:'पासवर्ड चुकीचा आहे.',
+    OPERATION_NOT_ALLOWED:'Firebase Authentication मध्ये Email/Password sign-in सुरू नाही.',
+    API_KEY_INVALID:'Firebase API key अवैध आहे; firebase-config.json मधील key तपासा.',
+    INVALID_API_KEY:'Firebase API key अवैध आहे; firebase-config.json मधील key तपासा.',
+    PERMISSION_DENIED:'Firestore Rules ने विनंती नाकारली. UID, users/{UID} भूमिका आणि संबंधित collection rule तपासा.',
+    ACCESS_DENIED:'users/{Auth UID} documentमध्ये active=true आणि मान्य role (owner/doctor/student) तपासा.',
+    NOT_FOUND:'Firestore document/collection path सापडला नाही. loginवेळी users/{Auth UID} document तपासा.',
+    RESOURCE_EXHAUSTED:'Firebase quota किंवा rate limit गाठली आहे.',
+    NETWORK_ERROR:'नेटवर्क किंवा Firebase endpointशी जोडणी झाली नाही.',
+    SESSION_EXPIRED:'Firebase सत्र संपले. पुन्हा login करा.',
+    NOT_CONFIGURED:'Firebase config उपलब्ध नाही किंवा disabled आहे.'
+  };
+  if(messages[code])return `${messages[code]} [${code}]`;
+  if(code.startsWith('HTTP_403'))return `${messages.PERMISSION_DENIED} [${code}]`;
+  if(code.startsWith('HTTP_404'))return `${messages.NOT_FOUND} [${code}]`;
+  if(code.startsWith('HTTP_401'))return `${messages.SESSION_EXPIRED} [${code}]`;
+  return `Firebase error code: ${code||'UNKNOWN_ERROR'}. [${code||'UNKNOWN_ERROR'}]`;
+}
+function authError(code){const e=new Error(code);e.code=code;return e}
+function isMissingDocument(error){return error?.code==='NOT_FOUND'||error?.code==='HTTP_404'}
 export function createAuth(config, request = fetch) {
   let session = null;
   let generation = 0;
   const configured = Boolean(config?.enabled === true && config?.apiKey && config?.projectId);
   async function json(url, options) {
-    const response = await request(url, {...options, cache: 'no-store', signal: AbortSignal.timeout(15000)});
-    if (!response.ok) throw new Error('AUTH_FAILED');
-    return response.json();
+    let response;
+    try { response=await request(url,{...options,cache:'no-store',signal:AbortSignal.timeout(15000)}); }
+    catch { throw authError('NETWORK_ERROR'); }
+    let payload=null;
+    try { payload=await response.json(); } catch {}
+    if (!response.ok) {
+      const firebaseCode=String(payload?.error?.status||payload?.error?.message||'').split(/[ :]/)[0].replace(/[^A-Za-z0-9_]/g,'').toUpperCase();
+      throw authError(firebaseCode||`HTTP_${response.status}`);
+    }
+    if(payload===null)throw authError('INVALID_RESPONSE');
+    return payload;
   }
   async function validToken() {
-    if (!session || Date.now() >= session.expiresAt) { session=null; throw new Error('SESSION_EXPIRED'); }
+    if (!session || Date.now() >= session.expiresAt) { session=null; throw authError('SESSION_EXPIRED'); }
     if (Date.now() + 60000 < session.tokenExpiresAt) return session.idToken;
     const refreshed=await json(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(config.apiKey)}`,{
       method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
       body:new URLSearchParams({grant_type:'refresh_token',refresh_token:session.refreshToken})
     });
-    if(!refreshed.id_token)throw new Error('SESSION_EXPIRED');
+    if(!refreshed.id_token)throw authError('SESSION_EXPIRED');
     session.idToken=refreshed.id_token;session.refreshToken=refreshed.refresh_token||session.refreshToken;
     session.tokenExpiresAt=Date.now()+Number(refreshed.expires_in||3600)*1000;
     return session.idToken;
@@ -101,10 +134,14 @@ export function createAuth(config, request = fetch) {
       if(!session)throw new Error('SESSION_EXPIRED');
       if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(id)||!Array.isArray(payload?.complaints)||typeof payload?.values!=='object')throw new Error('SYNTHETIC_ONLY');
       if(payload.complaints.length>10||JSON.stringify(payload).length>25000)throw new Error('RECORD_TOO_LARGE');
-      // Determine the original author before an update. Never claim another author's draft.
+      // Students write under their own UID without a preliminary GET. A GET of a
+      // missing document is denied by the student read rule, so read-before-write
+      // would block legitimate creates. Update rules still prevent editing others.
       let author=session.uid;
-      try{const prior=await this.loadDemoClinical(id);author=prior.createdBy;if(session.role==='student'&&author!==session.uid)throw new Error('ACCESS_DENIED')}
-      catch(error){if(error.message==='ACCESS_DENIED')throw error;if(error.message!=='AUTH_FAILED')throw error}
+      if(session.role!=='student'){
+        try{const prior=await this.loadDemoClinical(id);author=prior.createdBy}
+        catch(error){if(!isMissingDocument(error))throw error}
+      }
       const record={id,createdBy:author,payload,updatedAt:new Date().toISOString()};
       const fields=Object.fromEntries(Object.entries(record).map(([k,v])=>[k,toValue(v)]));
       await firestore(`demoClinical/${id}`,{method:'PATCH',body:{fields}});
@@ -126,7 +163,7 @@ export function createAuth(config, request = fetch) {
       if(payload.drugs.length>20||JSON.stringify(payload).length>40000)throw new Error('RECORD_TOO_LARGE');
       let author=session.uid;
       try{const prior=await this.loadDemoPrescription(id);author=prior.createdBy}
-      catch(error){if(error.message!=='AUTH_FAILED')throw error}
+      catch(error){if(!isMissingDocument(error))throw error}
       const record={id,createdBy:author,updatedBy:session.uid,payload,updatedAt:new Date().toISOString()};
       const fields=Object.fromEntries(Object.entries(record).map(([k,v])=>[k,toValue(v)]));
       await firestore(`demoPrescriptions/${id}`,{method:'PATCH',body:{fields}});
@@ -140,12 +177,12 @@ export function createAuth(config, request = fetch) {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({email: email.trim(), password, returnSecureToken: true})
       });
-      if (!auth.localId || !auth.idToken) throw new Error('AUTH_FAILED');
+      if (!auth.localId || !auth.idToken) throw authError('AUTH_FAILED');
       const record = await json(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents/users/${encodeURIComponent(auth.localId)}`, {
         headers: {Authorization: `Bearer ${auth.idToken}`}
       });
       const role = acceptedRole(record);
-      if (!role || attempt !== generation) throw new Error('ACCESS_DENIED');
+      if (!role || attempt !== generation) throw authError('ACCESS_DENIED');
       // Never use the typed email to grant ownership. Server-controlled UID record only.
       const now=Date.now();
       session = {uid: auth.localId, role, idToken:auth.idToken,refreshToken:auth.refreshToken,tokenExpiresAt:now+Number(auth.expiresIn||3600)*1000,expiresAt:now+15*60*1000};
