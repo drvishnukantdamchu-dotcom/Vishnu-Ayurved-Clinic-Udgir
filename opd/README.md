@@ -24,3 +24,10 @@ The initial month now sets inclusive date bounds. Screen, CSV and print share th
 ## Cloud sync diagnostics (v24)
 
 Updated PWA cache keys and corrected settings/intake copy to match the tested Firebase intake and case-taking sync. Prescription sync requires the `demoPrescriptions` Firestore rules. The clinical editor explains how to open a saved synthetic draft on another signed-in device. Firebase REST errors retain a sanitized status code in the UI (for example, `PERMISSION_DENIED`, `NOT_FOUND`, or `NETWORK_ERROR`) and login maps common configuration and account failures to a direct message. Do not share passwords, tokens, patient data, or full Firebase response bodies in support messages. This client-side change cannot publish Firestore rules; re-test each role after the Console rules are deployed.
+
+
+## Durable intake retry (v25)
+
+New intakes require login and are written to IndexedDB before upload. Pending rows survive refresh and are retried on login, reconnect, or the sync button, using their original ID and submitting UID. Each cloud create uses an exists=false precondition; a previously saved record is read back instead of overwritten on a retry. Failed records remain pending and do not block subsequent rows. Logout/reload clears the in-memory workspace. Pending intakes are included in the manual JSON backup, which remains an unencrypted synthetic-data backup.
+
+This is still a synthetic-only prototype. This change does not complete prescription rule deployment, longitudinal visit history, attachments/Panchakarma cloud sync, or automated Drive backup. Automated tests cover retry failure, account isolation, session changes, and an existing remote record; live multi-device/offline validation remains required.

@@ -1,6 +1,6 @@
 // Browser-local persistence for synthetic VAC-DEMO data only. Never use for real patient records.
 const NAME='vac-opd-synthetic-v1';
-const KINDS=new Set(['clinical','prescription','panchakarma','attachment','followup']);
+const KINDS=new Set(['intake','clinical','prescription','panchakarma','attachment','followup']);
 export function syntheticId(id){return /^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(String(id||''))}
 function open(){return new Promise((resolve,reject)=>{if(!globalThis.indexedDB){reject(new Error('STORAGE_UNAVAILABLE'));return}const request=indexedDB.open(NAME,1);request.onupgradeneeded=()=>{request.result.createObjectStore('records',{keyPath:'key'})};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 async function operation(mode,action){const db=await open();return new Promise((resolve,reject)=>{const tx=db.transaction('records',mode),store=tx.objectStore('records');let result;const request=action(store);request.onsuccess=()=>{result=request.result};request.onerror=()=>reject(request.error);tx.oncomplete=()=>{db.close();resolve(result)};tx.onerror=()=>{db.close();reject(tx.error)};tx.onabort=()=>{db.close();reject(tx.error)}})}

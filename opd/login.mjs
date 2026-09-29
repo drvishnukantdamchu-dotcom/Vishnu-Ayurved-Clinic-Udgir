@@ -1,5 +1,5 @@
-import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=24';
-import {setAuthProvider} from './auth-context.mjs?v=24';
+import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=25';
+import {setAuthProvider} from './auth-context.mjs?v=25';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
@@ -32,5 +32,5 @@ form.addEventListener('submit',async e=>{
  }catch(error){reset('लॉगिन झाले नाही. '+firebaseErrorMessage(error));}
  finally{panel.querySelector('#auth-password').value='';}
 });
-out.onclick=()=>reset('लॉगआउट झाले.');
-setInterval(()=>{if(!out.hidden&&!auth?.current())reset('सत्र संपले. पुन्हा लॉगिन करा.');},15000);
+out.onclick=()=>{reset('लॉगआउट झाले.');location.reload()};
+setInterval(()=>{if(!out.hidden&&!auth?.current()){reset('सत्र संपले. पुन्हा लॉगिन करा.');location.reload()}},15000);

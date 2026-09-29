@@ -76,9 +76,11 @@ export function createAuth(config, request = fetch) {
     if(/^patientIntakes\/[A-Za-z0-9_-]{1,150}$/.test(path))return `${documents}/${path}`;
     throw new Error('PATH_DENIED');
   }
-  async function firestore(path,{method='GET',body}={}) {
+  async function firestore(path,{method='GET',body,createOnly=false}={}) {
+    const attempt=generation;
     const token=await validToken();
-    return json(firestorePath(path),{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
+    if(attempt!==generation)throw authError('SESSION_CHANGED');
+    return json(firestorePath(path)+(createOnly?'?currentDocument.exists=false':''),{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
   }
   function toValue(value){
     if(value===null)return {nullValue:null};
@@ -114,13 +116,23 @@ export function createAuth(config, request = fetch) {
       const rows=await firestore('patientIntakes:runQuery',{method:'POST',body:query});
       return rows.filter(row=>row.document).map(row=>{const d=row.document;return {...Object.fromEntries(Object.entries(d.fields||{}).map(([k,v])=>[k,fromValue(v)])),id:d.name.split('/').at(-1)}});
     },
-    async savePatientIntake(record){
+    async savePatientIntake(record,{createOnly=false}={}){
       if(!session)throw new Error('SESSION_EXPIRED');
       if(!/^VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(record?.id)||!record?.name)throw new Error('SYNTHETIC_ONLY');
       const now=new Date().toISOString();
       const intake={id:record.id,createdBy:String(record.createdBy||session.uid),name:String(record.name).slice(0,100),age:String(record.age||''),gender:String(record.gender||''),village:String(record.village||'').slice(0,100),mobile:String(record.mobile||''),visitDate:String(record.visitDate||''),type:String(record.type||'नवीन'),enteredAt:String(record.enteredAt||now),createdAt:String(record.createdAt||now),updatedAt:now};
       const fields=Object.fromEntries(Object.entries(intake).map(([k,v])=>[k,toValue(v)]));
-      const result=await firestore(`patientIntakes/${encodeURIComponent(record.id)}`,{method:'PATCH',body:{fields}});
+      let result;
+      try {result=await firestore(`patientIntakes/${encodeURIComponent(record.id)}`,{method:'PATCH',body:{fields},createOnly});}
+      catch(error){
+        if(!createOnly||!['ALREADY_EXISTS','FAILED_PRECONDITION'].includes(error.code))throw error;
+        // An acknowledged write may have lost its response. Read it back; never
+        // overwrite a newer cloud record while retrying the same intake ID.
+        const existing=await firestore(`patientIntakes/${encodeURIComponent(record.id)}`);
+        const saved=Object.fromEntries(Object.entries(existing.fields||{}).map(([k,v])=>[k,fromValue(v)]));
+        if(saved.id!==record.id||saved.createdBy!==intake.createdBy)throw authError('RECORD_CONFLICT');
+        return saved;
+      }
       return {...intake,id:result.name?.split('/').at(-1)||intake.id};
     },
     async loadDemoClinical(id){

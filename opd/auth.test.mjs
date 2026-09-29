@@ -90,3 +90,19 @@ test('Firebase REST permission errors are surfaced as useful safe diagnostics',a
  await assert.rejects(a.login('x@example.com','secret'),e=>e.code==='PERMISSION_DENIED'&&!String(e).includes('private body'));
  assert.match(firebaseErrorMessage(Object.assign(new Error('PERMISSION_DENIED'),{code:'PERMISSION_DENIED'})),/Rules.*UID/);
 });
+
+test('retrying an intake cannot overwrite a newer cloud record',async()=>{
+ const calls=[];const responses=[{localId:'uid',idToken:'token'},doc('owner'),{error:{status:'ALREADY_EXISTS'}},{fields:{id:{stringValue:'VAC-DEMO-1'},createdBy:{stringValue:'uid'},name:{stringValue:'Updated on another device'}}}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});const data=responses.shift();return {ok:!data.error,status:data.error?409:200,json:async()=>data}});
+ await a.login('demo@example.com','test');
+ const saved=await a.savePatientIntake({id:'VAC-DEMO-1',name:'Old local value',createdBy:'uid'},{createOnly:true});
+ assert.match(calls[2].url,/currentDocument\.exists=false$/);
+ assert.equal(calls[3].options.method,'GET');assert.equal(calls.length,4);
+ assert.equal(saved.name,'Updated on another device');
+});
+test('intake retry does not adopt an existing record owned by someone else',async()=>{
+ const responses=[{localId:'uid',idToken:'token'},doc('owner'),{error:{status:'FAILED_PRECONDITION'}},{fields:{id:{stringValue:'VAC-DEMO-1'},createdBy:{stringValue:'other'}}}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async()=>{const data=responses.shift();return {ok:!data.error,status:data.error?400:200,json:async()=>data}});
+ await a.login('demo@example.com','test');
+ await assert.rejects(a.savePatientIntake({id:'VAC-DEMO-1',name:'Demo',createdBy:'uid'},{createOnly:true}),/RECORD_CONFLICT/);
+});
