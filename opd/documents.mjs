@@ -1,4 +1,4 @@
-import {getDemo,putDemo} from './demo-store.mjs?v=23';
+import {getDemo,putDemo} from './demo-store.mjs?v=24';
 import {todayIST} from './patient-model.mjs';
 // Temporary prototype: browser-memory-only attachments for synthetic VAC-DEMO records.
 const attachments=new Map(),MAX_BYTES=5*1024*1024,MAX_FILES=20;
