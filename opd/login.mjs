@@ -1,5 +1,5 @@
-import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=22';
-import {setAuthProvider} from './auth-context.mjs?v=22';
+import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=23';
+import {setAuthProvider} from './auth-context.mjs?v=23';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>

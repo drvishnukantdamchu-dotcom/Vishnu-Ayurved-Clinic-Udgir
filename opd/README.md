@@ -21,6 +21,6 @@ Run `node --test opd/*.test.mjs` from the repo root (or `node --test *.test.mjs`
 
 The initial month now sets inclusive date bounds. Screen, CSV and print share the same sorted filters, including mobile search. Empty/invalid ranges disable export and print. A4 report styling includes clinic identity, selected dates and repeating table headings. Counts represent loaded intake records, not a longitudinal visit ledger. Cloud intake updates refresh existing report rows without duplicating the queue. CSV text beginning with spreadsheet formula operators is neutralized.
 
-## Cloud sync diagnostics (v22)
+## Cloud sync diagnostics (v23)
 
-Firebase REST errors now retain a sanitized status code in the UI (for example, `PERMISSION_DENIED`, `NOT_FOUND`, or `NETWORK_ERROR`) and login maps common configuration and account failures to a direct message. Do not share passwords, tokens, patient data, or full Firebase response bodies in support messages. This client-side change cannot publish Firestore rules; re-test each role after the Console rules are deployed.
+Updated the service worker and module cache keys so current sync status/error fixes load on installed PWAs too. The clinical editor now explains how a saved synthetic draft is opened on another signed-in device. Firebase REST errors retain a sanitized status code in the UI (for example, `PERMISSION_DENIED`, `NOT_FOUND`, or `NETWORK_ERROR`) and login maps common configuration and account failures to a direct message. Do not share passwords, tokens, patient data, or full Firebase response bodies in support messages. This client-side change cannot publish Firestore rules; re-test each role after the Console rules are deployed.

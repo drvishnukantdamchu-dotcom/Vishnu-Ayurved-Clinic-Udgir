@@ -1,5 +1,5 @@
-import {getAuthProvider} from './auth-context.mjs?v=22';
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=22';
+import {getAuthProvider} from './auth-context.mjs?v=23';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=23';
 // Synthetic-only case-taking drafts. No localStorage, cloud writes or clinical advice.
 const drafts=new Map();
 const fields=[['bp','BP (mmHg)'],['pulse','Pulse (/min)'],['spo2','SpO₂ (%)'],['temperature','तापमान (°C)'],['weight','वजन (kg)'],['allergy','ॲलर्जी'],['history','पूर्वव्याधी / औषधांचा इतिहास'],['surgery','शस्त्रक्रिया / पूर्वीचे admission'],['addiction','व्यसनाची नोंद'],['nadi','नाडी'],['urine','मूत्र'],['stool','मल'],['tongue','जिह्वा'],['voice','शब्द'],['touch','स्पर्श'],['eyes','दृक्'],['build','आकृती'],['agni','अग्नी'],['strength','बल'],['notes','इतर निरीक्षणे']];
@@ -9,7 +9,7 @@ document.addEventListener('opd-case-open',e=>{
  const summary=document.createElement('section');box.append(summary);
  const form=document.createElement('form');form.className='clinical-editor';
  const heading=document.createElement('h2');heading.textContent='केस-टेकिंग · काल्पनिक चाचणी';form.append(heading);
- const hint=document.createElement('p');hint.textContent='काल्पनिक नोंदी या डिव्हाइसवर साठतात; Firebase किंवा दुसऱ्या डिव्हाइसवर दिसत नाहीत. रिकामे field म्हणजे तपासणी नोंदवलेली नाही.';form.append(hint);
+ const hint=document.createElement('p');hint.textContent='काल्पनिक तपासणी Firebase मध्ये जतन केल्यावर त्याच रुग्णाची नोंद इतर login केलेल्या Owner/Doctor किंवा संबंधित विद्यार्थी डिव्हाइसवर उघडता येते. जुनी नोंद आणण्यासाठी Firebase मधून उघडा वापरा. रिकामे field म्हणजे तपासणी नोंदवलेली नाही.';form.append(hint);
  const rows=document.createElement('div');form.append(rows);
  function addComplaint(c={text:'',duration:'',severity:''}){
   const row=document.createElement('div');row.className='complaint-row form-grid';
