@@ -36,3 +36,5 @@ This is still a synthetic-only prototype. This change does not complete prescrip
 Version 27: English interface, clinical labels, print text, validation and CSV headings. Existing visit-type and gender values remain compatible with Firestore. Original Marathi artwork and user-entered content are retained. Production clinical workflows and cloud validation remain incomplete.
 
 Version 28: local review entries and notes persist in IndexedDB and manual backup. Review marking requires a signed-in Owner or Doctor in the UI. This is not cloud review or clinical approval.
+
+Version 29: user-requested offline mode. Firebase login and sync are disconnected from the app entry point. Local intake persists after reload; case taking, prescriptions, review, follow-ups, Panchakarma, attachments, backup and restore require no login. Device-local storage is not encrypted and there is no multi-user access control. Existing Firebase records were not deleted or imported. This remains a synthetic demo.

@@ -19,8 +19,7 @@ const originalShowCase=showCase;
 showCase=function(p){originalShowCase(p);for(const [label,value] of [['Visit date',p.visitDate],['Age',p.age],['Gender',p.gender],['Mobile',p.mobile],['Entry time',p.enteredAt]])if(value){const line=document.createElement('p');line.textContent=label+': '+(label==='Gender'?genderLabel(value):value);document.getElementById('case-content').append(line)}document.dispatchEvent(new CustomEvent('opd-case-open',{detail:p}))};
 document.getElementById('date').textContent=new Intl.DateTimeFormat('en-IN',{dateStyle:'full',timeZone:'Asia/Kolkata'}).format(new Date());
 document.getElementById('text-size').onclick=e=>{const active=document.body.classList.toggle('large');e.target.setAttribute('aria-pressed',String(active))};
-let firebaseSignedIn=false;
-function network(){const connection=navigator.onLine?'Online':'Offline';const cloud=!navigator.onLine?'Cloud sync paused':firebaseSignedIn?'Firebase · Sample intake sync':'Firebase sign-in required';document.getElementById('network').textContent=`${connection} · ${cloud}`}
-window.addEventListener('online',network);window.addEventListener('offline',network);window.addEventListener('opd-auth-change',e=>{firebaseSignedIn=Boolean(e.detail);network()});network();
+function network(){document.getElementById('network').textContent='Offline workspace · Saved on this device'}
+network();
 let promptEvent;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();promptEvent=e;document.getElementById('install').hidden=false});document.getElementById('install').onclick=async()=>{if(promptEvent){await promptEvent.prompt();promptEvent=null;document.getElementById('install').hidden=true}};
 if('serviceWorker' in navigator && /^https?:$/.test(location.protocol))navigator.serviceWorker.register('./sw.js').catch(()=>{document.getElementById('network').textContent+=' · Offline shell unavailable'});
