@@ -1,18 +1,19 @@
-import {allDemo,putDemo} from './demo-store.mjs?v=34';
-import {todayIST,validatePatient,searchPatients} from './patient-model.mjs?v=34';
-import './clinical.mjs?v=34';
-import './prescription.mjs?v=34';
-import './panchakarma.mjs?v=34';
-import './followup.mjs?v=34';
-import './reports.mjs?v=34';
-import './documents.mjs?v=34';
-import './review.mjs?v=34';
-import './backup.mjs?v=34';
-import './record-management.mjs?v=34';
+import {allDemo,putDemo} from './demo-store.mjs?v=35';
+import {todayIST,validatePatient,searchPatients} from './patient-model.mjs?v=35';
+import './clinical.mjs?v=35';
+import './prescription.mjs?v=35';
+import './panchakarma.mjs?v=35';
+import './followup.mjs?v=35';
+import './reports.mjs?v=35';
+import './documents.mjs?v=35';
+import './review.mjs?v=35';
+import './backup.mjs?v=35';
+import './record-management.mjs?v=35';
+import './dashboard.mjs?v=35';
 const section=document.getElementById('patients');
 document.querySelector('label[for="search"]').textContent='Name, Patient ID, village or mobile';
 const panel=document.createElement('details');panel.className='panel';
-panel.innerHTML=`<summary>＋ Register a new patient</summary><p class="notice">Personal offline workspace. Records are saved in this browser on this device. Download regular backups. No Firebase connection or sign-in is required.</p>
+panel.innerHTML=`<summary>＋ Register a new patient</summary><p class="notice">New entries are saved locally first. Firebase sync runs when connected. Keep regular backups.</p>
 <form id="registration"><div class="form-grid">
 <label>Full name *<input name="name" required maxlength="100" autocomplete="off" placeholder="Patient full name"></label>
 <label>Age (years)<input name="age" type="number" min="0" max="120" step="1"></label>

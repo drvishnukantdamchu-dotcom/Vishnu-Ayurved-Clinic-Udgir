@@ -1,4 +1,4 @@
-import {searchPatients} from './patient-model.mjs?v=34';
+import {searchPatients} from './patient-model.mjs?v=35';
 export function monthRange(value) {
   if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(value))return {from:'',to:''};
   const [year,month]=value.split('-').map(Number);

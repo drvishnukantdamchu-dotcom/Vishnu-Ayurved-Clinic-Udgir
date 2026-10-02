@@ -1,5 +1,5 @@
-import {getDemo,putDemo} from './demo-store.mjs?v=34';
-import {todayIST} from './patient-model.mjs?v=34';
+import {getDemo,putDemo} from './demo-store.mjs?v=35';
+import {todayIST} from './patient-model.mjs?v=35';
 // Temporary prototype: browser-memory-only attachments for synthetic VAC-DEMO records.
 const attachments=new Map(),MAX_BYTES=5*1024*1024,MAX_FILES=20;
 document.addEventListener('opd-case-open',event=>{

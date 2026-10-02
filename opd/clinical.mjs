@@ -1,11 +1,11 @@
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=34';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=35';
 // Synthetic-only case-taking drafts. No localStorage, cloud writes or clinical advice.
 const drafts=new Map();
 const fields=[['bp','BP (mmHg)'],['pulse','Pulse (/min)'],['spo2','SpO₂ (%)'],['temperature','Temperature (°C)'],['weight','Weight (kg)'],['allergy','Allergies'],['history','Medical / medication history'],['surgery','Surgical history / previous admissions'],['addiction','Substance use history'],['nadi','Nadi (pulse examination)'],['urine','Mutra (urine)'],['stool','Mala (stool)'],['tongue','Jihva (tongue)'],['voice','Shabda (voice)'],['touch','Sparsha (touch)'],['eyes','Drik (eyes)'],['build','Akruti (build)'],['agni','Agni (digestion)'],['strength','Bala (strength)'],['notes','Other observations']];
 document.addEventListener('opd-case-open',e=>{
  const patient=e.detail,box=document.getElementById('case-content');if(!syntheticId(patient.id))return;
  const saved=drafts.get(patient.id)||{complaints:[{text:'',duration:'',severity:''}],values:{}};
- const summary=document.createElement('section');box.append(summary);
+ const summary=document.createElement('section');summary.className='examination-summary';box.append(summary);
  const form=document.createElement('form');form.className='clinical-editor';
  const heading=document.createElement('h2');heading.textContent='Case taking';form.append(heading);
  const hint=document.createElement('p');hint.textContent='Examinations are saved offline on this device. Blank fields mean not recorded. Include your records in regular backups.';form.append(hint);

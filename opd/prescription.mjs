@@ -1,11 +1,11 @@
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=34';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=35';
 // Demo drafts only: no approvals, recommendations, signatures or persistent records.
 const prescriptions=new Map();
 const drugFields=[['name','Medicine name'],['form','Form (Vati / Churna / Kwath / other)'],['dose','Dose and unit (tablet / g / ml)'],['times','Timing (morning / noon / evening / night)'],['food','Before / after food / bedtime'],['vehicle','Anupana (vehicle)'],['duration','Duration'],['site','Application site and instructions']];
 document.addEventListener('opd-case-open',event=>{
  const id=event.detail.id,box=document.getElementById('case-content');if(!syntheticId(id))return;
  const data=prescriptions.get(id)||{diagnosis:'',advice:'',followup:'',drugs:[]};
- const summary=document.createElement('section');summary.className='prescription-summary';box.append(summary);
+ const caseDiagnosis=document.createElement('p');caseDiagnosis.className='case-diagnosis';box.append(caseDiagnosis);const summary=document.createElement('section');summary.className='prescription-summary';box.append(summary);
  const form=document.createElement('form');form.className='clinical-editor';form.id='prescription-editor';
  const h=document.createElement('h2');h.textContent='Diagnosis and prescription';form.append(h);
  const warning=document.createElement('p');warning.className='notice';warning.textContent='Medicines and doses are entered by the clinician. Review the completed prescription before printing. Records are saved on this device.';form.append(warning);
@@ -19,11 +19,11 @@ document.addEventListener('opd-case-open',event=>{
  const followup=field(form,'followup','Follow-up date',data.followup);followup.type='date';
  const save=document.createElement('button');save.type='submit';save.textContent='Save prescription';form.append(save);
  const status=document.createElement('p');status.setAttribute('role','status');form.append(status);box.append(form);
- function draw(d){summary.replaceChildren();const title=document.createElement('h2');title.textContent='OPD Prescription';summary.append(title);
+ function draw(d){caseDiagnosis.textContent='Diagnosis / dosha: '+(d.diagnosis||'Not recorded');summary.replaceChildren();const title=document.createElement('h2');title.textContent='OPD Prescription';summary.append(title);
   function line(text){const p=document.createElement('p');p.textContent=text;summary.append(p);}
   line('Diagnosis / dosha: '+(d.diagnosis||'Not recorded'));
   if(!d.drugs.length)line('No medicines recorded.');
-  d.drugs.forEach((drug,i)=>{line(`${i+1}. ${drug.name}`);for(const [key,label]of drugFields.slice(1))if(drug[key])line(`${label}: ${drug[key]}`)});
+  d.drugs.forEach((drug,i)=>{const block=document.createElement('article');block.className='medicine-print-block';const name=document.createElement('h3');name.textContent=`${i+1}. ${drug.name}`;block.append(name);for(const [key,label]of drugFields.slice(1))if(drug[key]){const p=document.createElement('p');p.textContent=`${label}: ${drug[key]}`;block.append(p)}summary.append(block)});
   if(d.advice)line('Instructions: '+d.advice);if(d.followup)line('Follow-up: '+d.followup);
  }
  draw(data);getDemo('prescription',id).then(stored=>{if(!stored||prescriptions.has(id))return;prescriptions.set(id,stored);diagnosis.value=stored.diagnosis||'';advice.value=stored.advice||'';followup.value=stored.followup||'';rows.replaceChildren();(stored.drugs||[]).forEach(addDrug);draw(stored)}).catch(()=>{status.textContent='Local storage is unavailable in this browser.'});

@@ -1,12 +1,12 @@
-import {createAuth,firebaseErrorMessage} from './auth.mjs?v=34';
-import {setAuthProvider} from './auth-context.mjs?v=34';
-import {useStudentStore,putDemo,allDemo,syncRows,acceptCloud} from './demo-store.mjs?v=34';
-import {syncClinic} from './clinic-sync.mjs?v=34';
-import {todayIST,validatePatient,searchPatients} from './patient-model.mjs?v=34';
+import {createAuth,firebaseErrorMessage} from './auth.mjs?v=35';
+import {setAuthProvider} from './auth-context.mjs?v=35';
+import {useStudentStore,putDemo,allDemo,syncRows,acceptCloud} from './demo-store.mjs?v=35';
+import {syncClinic} from './clinic-sync.mjs?v=35';
+import {todayIST,validatePatient,searchPatients} from './patient-model.mjs?v=35';
 const get=id=>document.getElementById(id);let auth,busy=false,epoch=0,timer;const form=get('student-registration');form.elements.visitDate.value=todayIST();form.elements.visitDate.max=todayIST();
 let device;const storedUid=localStorage.getItem('vac-student-device-uid');
 get('student-login').querySelector('button').disabled=true;
-async function ready(uid){useStudentStore(uid);await import('./clinical.mjs?v=34');get('student-device').textContent=uid;get('student-login').querySelector('button').disabled=false;await draw();}
+async function ready(uid){useStudentStore(uid);await import('./clinical.mjs?v=35');get('student-device').textContent=uid;get('student-login').querySelector('button').disabled=false;await draw();}
 
 get('student-login').onsubmit=async e=>{e.preventDefault();get('student-login-panel').hidden=true;get('student-work').hidden=false;get('student-entry-name').value=get('student-name').value.trim();};
 try{const r=await fetch('./firebase-config.json',{cache:'no-store'});auth=createAuth(await r.json());device=await auth.openDevice(localStorage.getItem('vac-student-device-token'));localStorage.setItem('vac-student-device-token',device.refreshToken);localStorage.setItem('vac-student-device-uid',device.uid);setAuthProvider(auth);await ready(device.uid);get('student-login-status').textContent=device.role==='student'?'Device approved.':'Ask the Owner to approve this device ID in Settings. Entries can be saved locally while waiting.';await draw();}catch(error){get('student-login-status').textContent=firebaseErrorMessage(error)+' Enable Anonymous sign-in in Firebase Authentication.';if(/^[A-Za-z0-9_-]{1,128}$/.test(storedUid||'')){device={uid:storedUid,role:'pending'};await ready(storedUid);get('student-login-status').textContent='Offline entry available on this previously registered device. Reopen online to reconnect.';}}
