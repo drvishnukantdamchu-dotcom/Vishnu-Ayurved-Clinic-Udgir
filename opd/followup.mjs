@@ -1,9 +1,9 @@
-import {allDemo,putDemo,deleteDemo,syntheticId} from './demo-store.mjs?v=29';
-import {todayIST} from './patient-model.mjs?v=29';
+import {allDemo,putDemo,deleteDemo,syntheticId} from './demo-store.mjs?v=30';
+import {todayIST} from './patient-model.mjs?v=30';
 // Synthetic appointments live only in this tab. Completing one is not a clinical visit.
 const appointments=new Map();
 const section=document.getElementById('followups');
-section.innerHTML=`<h2>Follow-ups · Sample</h2><p>Follow-ups appear after saving a sample prescription with a follow-up date. These appointments remain on this device. Completing a follow-up does not create a new OPD visit.</p><div class="form-grid"><label>Name / ID / mobile<input id="followup-search" type="search"></label><label>List<select id="followup-filter"><option value="pending">All pending visits</option><option value="today">Today’s visits</option><option value="overdue">Overdue</option><option value="upcoming">Follow-ups</option><option value="done">Completed</option></select></label></div><p id="followup-count" role="status"></p><div id="followup-list"></div>`;
+section.innerHTML=`<h2>Follow-ups</h2><p>Follow-ups appear after saving a prescription with a follow-up date. These appointments remain on this device. Completing a follow-up does not create a new OPD visit.</p><div class="form-grid"><label>Name / ID / mobile<input id="followup-search" type="search"></label><label>List<select id="followup-filter"><option value="pending">All pending visits</option><option value="today">Today’s visits</option><option value="overdue">Overdue</option><option value="upcoming">Follow-ups</option><option value="done">Completed</option></select></label></div><p id="followup-count" role="status"></p><div id="followup-list"></div>`;
 const search=document.getElementById('followup-search'),filter=document.getElementById('followup-filter'),list=document.getElementById('followup-list');
 function draw(){
  const today=todayIST(),q=search.value.trim().toLocaleLowerCase();
@@ -13,7 +13,7 @@ function draw(){
   if(a.done)return false;
   return filter.value==='pending'||(filter.value==='today'&&a.date===today)||(filter.value==='overdue'&&a.date<today)||(filter.value==='upcoming'&&a.date>today);
  }).sort((a,b)=>a.date.localeCompare(b.date)||a.patient.name.localeCompare(b.patient.name));
- list.replaceChildren();document.getElementById('followup-count').textContent=`Matching sample appointments: ${rows.length}`;
+ list.replaceChildren();document.getElementById('followup-count').textContent=`Matching appointments: ${rows.length}`;
  if(!rows.length){list.textContent='No appointments match this filter. Patient search → Prescription → Enter a follow-up date and save the draft.';return}
  for(const a of rows){const card=document.createElement('article');card.className='panel';const title=document.createElement('h3');title.textContent=a.patient.name;const info=document.createElement('p');info.textContent=`${a.patient.id} · ${a.date} · ${a.done?'Complete':a.date<today?'Overdue':a.date===today?'Today':'Upcoming visit'}${a.patient.mobile?' · '+a.patient.mobile:''}`;
  const open=document.createElement('button');open.textContent='Open case paper';open.onclick=()=>document.dispatchEvent(new CustomEvent('opd-open-patient',{detail:a.patient}));
