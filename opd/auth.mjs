@@ -27,7 +27,8 @@ export function firebaseErrorMessage(error) {
     ACCESS_DENIED:'users/{Auth UID} documentमध्ये active=true आणि मान्य role (owner/doctor/student) तपासा.',
     NOT_FOUND:'Firestore document/collection path सापडला नाही. loginवेळी users/{Auth UID} document तपासा.',
     RESOURCE_EXHAUSTED:'Firebase quota किंवा rate limit गाठली आहे.',
-    NETWORK_ERROR:'नेटवर्क किंवा Firebase endpointशी जोडणी झाली नाही.',
+    NETWORK_ERROR:'Firebaseशी जोडणी झाली नाही. इंटरनेट, VPN/ad-blocker किंवा नेटवर्कमधील Google API निर्बंध तपासा; Firestore Rules बदलू नका.',
+    REQUEST_TIMEOUT:'Firebaseकडून १५ सेकंदांत प्रतिसाद आला नाही. जोडणी तपासून पुन्हा प्रयत्न करा.',
     SESSION_EXPIRED:'Firebase सत्र संपले. पुन्हा login करा.',
     NOT_CONFIGURED:'Firebase config उपलब्ध नाही किंवा disabled आहे.'
   };
@@ -45,8 +46,14 @@ export function createAuth(config, request = fetch) {
   const configured = Boolean(config?.enabled === true && config?.apiKey && config?.projectId);
   async function json(url, options) {
     let response;
-    try { response=await request(url,{...options,cache:'no-store',signal:AbortSignal.timeout(15000)}); }
-    catch { throw authError('NETWORK_ERROR'); }
+    // AbortSignal.timeout is absent in older mobile browsers. Use the widely
+    // supported controller so a local compatibility error is not called a
+    // Firebase network failure. Never retry writes automatically here.
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),15000);
+    try { response=await request(url,{...options,cache:'no-store',signal:controller.signal}); }
+    catch { throw authError(controller.signal.aborted?'REQUEST_TIMEOUT':'NETWORK_ERROR'); }
+    finally { clearTimeout(timer); }
     let payload=null;
     try { payload=await response.json(); } catch {}
     if (!response.ok) {

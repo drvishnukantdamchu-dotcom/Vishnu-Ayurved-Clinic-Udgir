@@ -1,5 +1,5 @@
-import {exportDemo,importDemo} from './demo-store.mjs?v=25';
-import {getAuthProvider} from './auth-context.mjs?v=25';
+import {exportDemo,importDemo} from './demo-store.mjs?v=26';
+import {getAuthProvider} from './auth-context.mjs?v=26';
 const settings=document.getElementById('settings');
 const box=document.createElement('section');box.className='panel';
 const title=document.createElement('h3');title.textContent='या डिव्हाइसवरील काल्पनिक नोंदी: बॅकअप / रिस्टोर';

@@ -106,3 +106,18 @@ test('intake retry does not adopt an existing record owned by someone else',asyn
  await a.login('demo@example.com','test');
  await assert.rejects(a.savePatientIntake({id:'VAC-DEMO-1',name:'Demo',createdBy:'uid'},{createOnly:true}),/RECORD_CONFLICT/);
 });
+
+
+test('login works without AbortSignal.timeout on older browsers',async()=>{
+ const prior=AbortSignal.timeout;AbortSignal.timeout=undefined;
+ try {
+  const responses=[{localId:'uid',idToken:'token'},doc('owner')];
+  const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(_url,options)=>{assert.ok(options.signal instanceof AbortSignal);return {ok:true,json:async()=>responses.shift()}});
+  assert.equal((await a.login('demo@example.com','test')).role,'owner');
+ } finally {AbortSignal.timeout=prior;}
+});
+test('transport failures do not reveal credentials or become permission errors',async()=>{
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async()=>{throw new TypeError('private transport details')});
+ await assert.rejects(a.login('demo@example.com','secret'),e=>e.code==='NETWORK_ERROR'&&!String(e).includes('private'));
+ assert.match(firebaseErrorMessage({code:'NETWORK_ERROR'}),/Rules बदलू नका/);
+});
