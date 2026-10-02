@@ -1,5 +1,5 @@
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=27';
-import {getAuthProvider} from './auth-context.mjs?v=27';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=28';
+import {getAuthProvider} from './auth-context.mjs?v=28';
 // Demo drafts only: no approvals, recommendations, signatures or persistent records.
 const prescriptions=new Map();
 const drugFields=[['name','Medicine name'],['form','Form (Vati / Churna / Kwath / other)'],['dose','Dose and unit (tablet / g / ml)'],['times','Timing (morning / noon / evening / night)'],['food','Before / after food / bedtime'],['vehicle','Anupana (vehicle)'],['duration','Duration'],['site','Application site and instructions']];

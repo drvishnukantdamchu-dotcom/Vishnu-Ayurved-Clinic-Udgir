@@ -1,5 +1,5 @@
-import {exportDemo,importDemo} from './demo-store.mjs?v=27';
-import {getAuthProvider} from './auth-context.mjs?v=27';
+import {exportDemo,importDemo} from './demo-store.mjs?v=28';
+import {getAuthProvider} from './auth-context.mjs?v=28';
 const settings=document.getElementById('settings');
 const box=document.createElement('section');box.className='panel';
 const title=document.createElement('h3');title.textContent='Local sample records: Backup / restore';

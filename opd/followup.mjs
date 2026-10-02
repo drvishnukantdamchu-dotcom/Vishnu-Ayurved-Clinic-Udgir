@@ -1,5 +1,5 @@
-import {allDemo,putDemo,deleteDemo,syntheticId} from './demo-store.mjs?v=27';
-import {todayIST} from './patient-model.mjs?v=27';
+import {allDemo,putDemo,deleteDemo,syntheticId} from './demo-store.mjs?v=28';
+import {todayIST} from './patient-model.mjs?v=28';
 // Synthetic appointments live only in this tab. Completing one is not a clinical visit.
 const appointments=new Map();
 const section=document.getElementById('followups');
