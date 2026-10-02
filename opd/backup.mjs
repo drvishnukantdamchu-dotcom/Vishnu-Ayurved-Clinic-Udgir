@@ -1,4 +1,4 @@
-import {exportDemo,importDemo} from './demo-store.mjs?v=33';
+import {exportDemo,importDemo} from './demo-store.mjs?v=34';
 const settings=document.getElementById('settings');
 const box=document.createElement('section');box.className='panel';
 const title=document.createElement('h3');title.textContent='Local clinic records: Backup / restore';

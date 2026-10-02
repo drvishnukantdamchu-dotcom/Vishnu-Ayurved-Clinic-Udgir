@@ -1,5 +1,5 @@
-import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=33';
-import {setAuthProvider} from './auth-context.mjs?v=33';
+import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=34';
+import {setAuthProvider} from './auth-context.mjs?v=34';
 const panel=document.createElement('section');
 panel.className='panel';
 panel.innerHTML=`<h2>Account sign-in</h2>

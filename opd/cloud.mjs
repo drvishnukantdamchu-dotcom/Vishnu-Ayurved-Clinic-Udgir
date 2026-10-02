@@ -1,6 +1,6 @@
-import {getAuthProvider} from './auth-context.mjs?v=33';
-import {syncRows,acceptCloud,allDemo} from './demo-store.mjs?v=33';
-import {syncClinic} from './clinic-sync.mjs?v=33';
+import {getAuthProvider} from './auth-context.mjs?v=34';
+import {syncRows,acceptCloud,allDemo} from './demo-store.mjs?v=34';
+import {syncClinic} from './clinic-sync.mjs?v=34';
 const section=document.createElement('section');section.className='panel';section.innerHTML='<h3>Firebase clinic sync</h3><p>Intake, examination, prescriptions, review notes, follow-ups and Panchakarma sync for Owner / Doctor. Files remain on this device. Local records are kept when a sync fails. Conflicting edits are never overwritten.</p><button id="clinic-sync" disabled>Sync clinic records</button><p id="clinic-cloud-status" role="status">Sign in through Settings to connect Firebase. New clinicRecords rules must be published.</p><button id="clinic-cloud-reload" hidden>Reload saved records</button>';
 document.getElementById('settings').prepend(section);
 const button=section.querySelector('#clinic-sync'),status=section.querySelector('#clinic-cloud-status'),reload=section.querySelector('#clinic-cloud-reload');let busy=false,again=false,epoch=0,timer;

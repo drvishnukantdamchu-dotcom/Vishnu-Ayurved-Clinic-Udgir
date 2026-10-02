@@ -1,4 +1,4 @@
-import {allDemo,putDemo} from './demo-store.mjs?v=33';
+import {allDemo,putDemo} from './demo-store.mjs?v=34';
 const section=document.getElementById('review');
 section.innerHTML=`<h2>Doctor review</h2><p>Local doctor review queue. Review entries and notes are saved on this device and included in local backups. They do not sync between devices. Review status is a local administrative note; no digital signature is applied.</p><label>Status<select id="review-filter"><option value="pending">Pending review</option><option value="all">All</option><option value="reviewed">Review complete</option></select></label><p id="review-count" role="status"></p><div id="review-list"></div>`;
 const items=new Map(),filter=document.getElementById('review-filter'),list=document.getElementById('review-list');
