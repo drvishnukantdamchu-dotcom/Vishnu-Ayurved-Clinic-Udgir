@@ -1,4 +1,4 @@
-import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=30';
+import {getDemo,putDemo,syntheticId} from './demo-store.mjs?v=31';
 // Synthetic-only case-taking drafts. No localStorage, cloud writes or clinical advice.
 const drafts=new Map();
 const fields=[['bp','BP (mmHg)'],['pulse','Pulse (/min)'],['spo2','SpO₂ (%)'],['temperature','Temperature (°C)'],['weight','Weight (kg)'],['allergy','Allergies'],['history','Medical / medication history'],['surgery','Surgical history / previous admissions'],['addiction','Substance use history'],['nadi','Nadi (pulse examination)'],['urine','Mutra (urine)'],['stool','Mala (stool)'],['tongue','Jihva (tongue)'],['voice','Shabda (voice)'],['touch','Sparsha (touch)'],['eyes','Drik (eyes)'],['build','Akruti (build)'],['agni','Agni (digestion)'],['strength','Bala (strength)'],['notes','Other observations']];

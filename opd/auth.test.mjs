@@ -121,3 +121,18 @@ test('transport failures do not reveal credentials or become permission errors',
  await assert.rejects(a.login('demo@example.com','secret'),e=>e.code==='NETWORK_ERROR'&&!String(e).includes('private'));
  assert.match(firebaseErrorMessage({code:'NETWORK_ERROR'}),/Do not change Firestore Rules/);
 });
+
+test('clinic REST pagination loads every page and edits carry update-time precondition',async()=>{
+ const calls=[],responses=[{localId:'uid',idToken:'token'},doc('owner'),{documents:[],nextPageToken:'next-page'},{documents:[]},{updateTime:'revision2'}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('test@example.com','test');await a.listClinicRecords();
+ assert.match(calls[2].url,/clinicRecords\?pageSize=100$/);assert.match(calls[3].url,/pageToken=next-page/);
+ await a.saveClinicRecord({kind:'intake',id:'VAC-OPD-20261002-x',value:{name:'Test'},updatedAt:'now',cloudRevision:'revision1',cloudAuthor:'original-author'});
+ const last=calls.at(-1);assert.match(last.url,/currentDocument.updateTime=revision1/);assert.equal(JSON.parse(last.options.body).fields.createdBy.stringValue,'original-author');
+});
+test('new clinic write must not overwrite an existing document',async()=>{
+ const calls=[],responses=[{localId:'uid',idToken:'token'},doc('owner'),{updateTime:'revision1'}];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('test@example.com','test');await a.saveClinicRecord({kind:'review',id:'VAC-OPD-20261002-x',value:{},updatedAt:'now'});
+ assert.match(calls.at(-1).url,/currentDocument.exists=false/);
+});

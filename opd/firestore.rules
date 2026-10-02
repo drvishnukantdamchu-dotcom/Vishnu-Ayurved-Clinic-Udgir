@@ -1,110 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
-    // Roles are provisioned through the trusted console, never by this client.
-    function signedIn() { return request.auth != null; }
-    function member() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true;
-    }
-    function role() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role; }
-    function doctorOrOwner() { return member() && role() in ['owner', 'doctor']; }
-    function student() { return member() && role() == 'student'; }
-    function validIntake(data, documentId) {
-      return data.keys().hasAll(['id','createdBy','name','age','gender','village','mobile','visitDate','type','enteredAt','createdAt','updatedAt'])
-        && data.keys().hasOnly(['id','createdBy','name','age','gender','village','mobile','visitDate','type','enteredAt','createdAt','updatedAt'])
-        && data.id == documentId && data.id.matches('VAC-DEMO-[A-Za-z0-9_-]{1,140}')
-        && data.createdBy is string
-        && data.name is string && data.name.size() > 0 && data.name.size() <= 100
-        && data.age is string && data.age.size() <= 3
-        && data.gender is string && data.gender.size() <= 20
-        && data.village is string && data.village.size() <= 100
-        && data.mobile is string && data.mobile.size() <= 10
-        && data.visitDate is string && data.visitDate.size() == 10
-        && data.type in ['नवीन','फॉलो-अप']
-        && data.enteredAt is string && data.createdAt is string && data.updatedAt is string;
-    }
-    match /patientIntakes/{intakeId} {
-      // Students query only records where createdBy equals their signed-in UID.
-      allow get, list: if doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid);
-      allow create: if validIntake(request.resource.data, intakeId)
-        && request.resource.data.createdBy == request.auth.uid
-        && (doctorOrOwner() || student());
-      allow update: if validIntake(request.resource.data, intakeId)
-        && request.resource.data.createdBy == resource.data.createdBy
-        && (doctorOrOwner() || (student()
-          && resource.data.createdBy == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','age','gender','village','mobile','visitDate','type','enteredAt','updatedAt'])));
-      allow delete: if member() && role() == 'owner';
-    }
-    // Synthetic case-taking drafts only. No real patient records.
-    function validDemoClinical(data, documentId) {
-      return data.keys().hasAll(['id','createdBy','payload','updatedAt'])
-        && data.keys().hasOnly(['id','createdBy','payload','updatedAt'])
-        && data.id == documentId
-        && data.id.matches('VAC-DEMO-[A-Za-z0-9_-]{1,140}')
-        && data.createdBy is string
-        && data.updatedAt is string
-        && data.updatedAt.size() <= 40
-        && data.payload is map
-        && data.payload.keys().hasAll(['complaints','values'])
-        && data.payload.keys().hasOnly(['complaints','values'])
-        && data.payload.complaints is list
-        && data.payload.complaints.size() <= 10
-        && data.payload.values is map
-        && data.payload.values.keys().hasOnly(['bp','pulse','spo2','temperature','weight','allergy','history','surgery','addiction','nadi','urine','stool','tongue','voice','touch','eyes','build','agni','strength','notes']);
-    }
-    match /demoClinical/{patientId} {
-      allow get: if doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid);
-      allow list: if false;
-      allow create: if validDemoClinical(request.resource.data,patientId)
-        && request.resource.data.createdBy == request.auth.uid
-        && (doctorOrOwner() || student());
-      allow update: if validDemoClinical(request.resource.data,patientId)
-        && request.resource.data.createdBy == resource.data.createdBy
-        && (doctorOrOwner() || (student() && resource.data.createdBy == request.auth.uid));
-      allow delete: if member() && role() == 'owner';
-    }
-    // Synthetic prescriptions: clinician roles only; no student or public access.
-    function validDemoPrescription(data, documentId) {
-      return data.keys().hasAll(['id','createdBy','updatedBy','payload','updatedAt'])
-        && data.keys().hasOnly(['id','createdBy','updatedBy','payload','updatedAt'])
-        && data.id == documentId
-        && data.id.matches('VAC-DEMO-[A-Za-z0-9_-]{1,140}')
-        && data.createdBy is string
-        && data.updatedBy is string
-        && data.updatedAt is string
-        && data.updatedAt.size() <= 40
-        && data.payload is map
-        && data.payload.keys().hasAll(['diagnosis','advice','followup','drugs'])
-        && data.payload.keys().hasOnly(['diagnosis','advice','followup','drugs'])
-        && data.payload.diagnosis is string && data.payload.diagnosis.size() <= 2000
-        && data.payload.advice is string && data.payload.advice.size() <= 2000
-        && data.payload.followup is string && data.payload.followup.size() <= 10
-        && data.payload.drugs is list && data.payload.drugs.size() <= 20;
-    }
-    match /demoPrescriptions/{patientId} {
-      allow get: if doctorOrOwner();
-      allow list: if false;
-      allow create: if doctorOrOwner()
-        && validDemoPrescription(request.resource.data,patientId)
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.updatedBy == request.auth.uid;
-      allow update: if doctorOrOwner()
-        && validDemoPrescription(request.resource.data,patientId)
-        && request.resource.data.createdBy == resource.data.createdBy
-        && request.resource.data.updatedBy == request.auth.uid;
-      allow delete: if member() && role() == 'owner';
-    }
-    // User roles remain console-provisioned. No client-side role changes.
-    match /users/{uid} {
-      allow get: if signedIn() && request.auth.uid == uid;
-      allow list, create, update, delete: if false;
-    }
-    // Images and all other collections stay closed.
-    match /{document=**} {
-      allow read, write: if false;
-    }
+ match /databases/{database}/documents {
+  function signedIn(){return request.auth != null;}
+  function clinician(){return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['owner','doctor'];}
+  function validRecord(d,recordId){
+   return d.keys().hasAll(['id','kind','payload','deleted','createdBy','updatedBy','updatedAt'])
+    && d.keys().hasOnly(['id','kind','payload','deleted','createdBy','updatedBy','updatedAt'])
+    && d.id is string && d.id.matches('VAC-OPD-[A-Za-z0-9_-]{1,140}')
+    && d.kind in ['intake','clinical','prescription','panchakarma','followup','review']
+    && recordId == d.kind + '_' + d.id
+    && d.payload is string && d.payload.size() <= 800000
+    && d.deleted is bool && d.createdBy is string
+    && d.updatedBy == request.auth.uid && d.updatedAt is string && d.updatedAt.size() <= 40;
   }
+  match /clinicRecords/{recordId}{
+   allow get,list: if clinician();
+   allow create: if clinician() && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == request.auth.uid;
+   allow update: if clinician() && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == resource.data.createdBy;
+   allow delete: if false;
+  }
+  match /users/{uid}{allow get: if signedIn() && request.auth.uid==uid; allow list,create,update,delete: if false;}
+  match /{document=**}{allow read,write: if false;}
+ }
 }

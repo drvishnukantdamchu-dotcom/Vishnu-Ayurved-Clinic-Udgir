@@ -77,17 +77,20 @@ export function createAuth(config, request = fetch) {
   }
   function firestorePath(path) {
     const documents=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents`;
+    if(path==='clinicRecords')return `${documents}/clinicRecords`;
+    if(/^clinicRecords\/(intake|clinical|prescription|panchakarma|followup|review)_VAC-OPD-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
     if(path==='patientIntakes:runQuery')return `${documents}:runQuery`;
     if(/^demoClinical\/VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
     if(/^demoPrescriptions\/VAC-DEMO-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
     if(/^patientIntakes\/[A-Za-z0-9_-]{1,150}$/.test(path))return `${documents}/${path}`;
     throw new Error('PATH_DENIED');
   }
-  async function firestore(path,{method='GET',body,createOnly=false}={}) {
+  async function firestore(path,{method='GET',body,createOnly=false,revision='',pageToken=''}={}) {
     const attempt=generation;
     const token=await validToken();
     if(attempt!==generation)throw authError('SESSION_CHANGED');
-    return json(firestorePath(path)+(createOnly?'?currentDocument.exists=false':''),{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
+    const params=new URLSearchParams();if(createOnly)params.set('currentDocument.exists','false');if(revision)params.set('currentDocument.updateTime',revision);if(path==='clinicRecords'){params.set('pageSize','100');if(pageToken)params.set('pageToken',pageToken)}
+    return json(firestorePath(path)+(params.size?'?'+params:''),{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)})});
   }
   function toValue(value){
     if(value===null)return {nullValue:null};
@@ -111,6 +114,21 @@ export function createAuth(config, request = fetch) {
   }
   return {
     configured,
+    async listClinicRecords(){
+      if(!['owner','doctor'].includes(session?.role))throw authError('ROLE_DENIED');
+      const records=[];let pageToken='';
+      do{const page=await firestore('clinicRecords',{pageToken});for(const doc of page.documents||[])records.push({...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,fromValue(v)])),revision:doc.updateTime});pageToken=page.nextPageToken||'';}while(pageToken);
+      return records;
+    },
+    async saveClinicRecord(row){
+      if(!['owner','doctor'].includes(session?.role))throw authError('ROLE_DENIED');
+      if(!['intake','clinical','prescription','panchakarma','followup','review'].includes(row.kind)||!/^VAC-OPD-[A-Za-z0-9_-]{1,140}$/.test(row.id))throw authError('INVALID_RECORD');
+      const payload=JSON.stringify(row.value??null);if(new TextEncoder().encode(payload).length>800000)throw authError('RECORD_TOO_LARGE');
+      const data={id:row.id,kind:row.kind,payload,deleted:row.deleted===true,createdBy:row.cloudAuthor||session.uid,updatedBy:session.uid,updatedAt:row.updatedAt};
+      const fields=Object.fromEntries(Object.entries(data).map(([k,v])=>[k,toValue(v)]));
+      const result=await firestore(`clinicRecords/${row.kind}_${row.id}`,{method:'PATCH',body:{fields},createOnly:!row.cloudRevision,revision:row.cloudRevision||''});
+      return {...data,revision:result.updateTime};
+    },
     logout() { generation++; session = null; },
     current() {
       if (session && Date.now() >= session.expiresAt) session = null;
