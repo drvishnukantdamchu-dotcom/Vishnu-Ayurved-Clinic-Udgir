@@ -22,7 +22,12 @@ service cloud.firestore {
    allow update: if (clinician() || (ownIntake(resource.data) && studentWrite(request.resource.data))) && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == resource.data.createdBy;
    allow delete: if false;
   }
-  match /users/{uid}{allow get: if signedIn() && request.auth.uid==uid; allow list,create,update,delete: if false;}
+  match /users/{uid}{allow get: if signedIn() && request.auth.uid==uid; allow list,delete: if false;
+   allow create,update: if clinician() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner' && uid != request.auth.uid
+    && request.resource.data.keys().hasAll(['role','active','displayName']) && request.resource.data.keys().hasOnly(['role','active','displayName'])
+    && request.resource.data.role == 'student' && request.resource.data.active is bool && request.resource.data.displayName == 'Clinic entry device'
+    && (!exists(/databases/$(database)/documents/users/$(uid)) || resource.data.role == 'student');}
+
   match /{document=**}{allow read,write: if false;}
  }
 }

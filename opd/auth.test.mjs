@@ -144,3 +144,14 @@ test('student clinic queries constrain author and kind and cannot save prescript
  for(const call of calls.slice(2)){const filters=JSON.parse(call.options.body).structuredQuery.where.compositeFilter.filters;assert.equal(filters[0].fieldFilter.value.stringValue,'student-uid');assert.ok(['intake','clinical'].includes(filters[1].fieldFilter.value.stringValue));}
  await assert.rejects(a.saveClinicRecord({kind:'prescription',id:'VAC-OPD-20261002-x',value:{}}),e=>e.code==='ROLE_DENIED');assert.equal(calls.length,4);
 });
+
+test('anonymous device waits for server approval and cannot upload records',async()=>{
+ const calls=[];const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return calls.length===1?{ok:true,json:async()=>({localId:'device-uid',idToken:'token',refreshToken:'device-refresh'})}:{ok:false,status:404,json:async()=>({error:{status:'NOT_FOUND'}})}});
+ const d=await a.openDevice();assert.equal(d.role,'pending');assert.equal(d.uid,'device-uid');assert.equal(JSON.parse(calls[0].options.body).email,undefined);
+ await assert.rejects(a.listClinicRecords(),e=>e.code==='ROLE_DENIED');await assert.rejects(a.setStudentDevice('other',true),e=>e.code==='ROLE_DENIED');
+});
+test('device refresh restores same UID and revocation removes cloud access',async()=>{
+ const responses=[{user_id:'device-uid',id_token:'token',refresh_token:'rotated'},doc('student'),doc('student',false)];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async()=>({ok:true,json:async()=>responses.shift()}));
+ assert.equal((await a.openDevice('saved')).role,'student');assert.equal((await a.checkDevice()).role,'pending');await assert.rejects(a.listClinicRecords(),e=>e.code==='ROLE_DENIED');
+});

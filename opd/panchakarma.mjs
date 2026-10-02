@@ -1,5 +1,5 @@
-import {allDemo,putDemo,syntheticId} from './demo-store.mjs?v=32';
-import {todayIST} from './patient-model.mjs?v=32';
+import {allDemo,putDemo,syntheticId} from './demo-store.mjs?v=33';
+import {todayIST} from './patient-model.mjs?v=33';
 const records=[];const patients=new Map();
 const section=document.getElementById('panchakarma');section.replaceChildren();
 const title=document.createElement('h2');title.textContent='Panchakarma · Daily sessions';section.append(title);

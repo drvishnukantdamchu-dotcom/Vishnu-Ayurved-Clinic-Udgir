@@ -77,6 +77,7 @@ export function createAuth(config, request = fetch) {
   }
   function firestorePath(path) {
     const documents=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents`;
+    if(/^users\/[A-Za-z0-9_-]{1,128}$/.test(path))return `${documents}/${path}`;
     if(path==='clinicRecords:runQuery')return `${documents}:runQuery`;
     if(path==='clinicRecords')return `${documents}/clinicRecords`;
     if(/^clinicRecords\/(intake|clinical|prescription|panchakarma|followup|review)_VAC-OPD-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
@@ -115,6 +116,26 @@ export function createAuth(config, request = fetch) {
   }
   return {
     configured,
+    async openDevice(savedRefreshToken){
+      session=null;const attempt=++generation;
+      if(!configured)throw authError('NOT_CONFIGURED');
+      const a=savedRefreshToken?await json(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(config.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'refresh_token',refresh_token:savedRefreshToken})}):await json(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${encodeURIComponent(config.apiKey)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({returnSecureToken:true})});
+      if(attempt!==generation)throw authError('SESSION_CHANGED');
+      const uid=a.localId||a.user_id,token=a.idToken||a.id_token,refresh=a.refreshToken||a.refresh_token;
+      if(!uid||!token||!refresh)throw authError('AUTH_FAILED');
+      const now=Date.now();session={uid,role:'pending',idToken:token,refreshToken:refresh,tokenExpiresAt:now+Number(a.expiresIn||a.expires_in||3600)*1000,expiresAt:now+12*60*60*1000};
+      await this.checkDevice();return {uid,refreshToken:refresh,role:session.role};
+    },
+    async checkDevice(){
+      if(!session)throw authError('SESSION_EXPIRED');
+      let record;try{record=await firestore(`users/${session.uid}`)}catch(e){if(!isMissingDocument(e))throw e;}
+      session.role=acceptedRole(record)==='student'?'student':'pending';return this.current();
+    },
+    async setStudentDevice(uid,active){
+      if(session?.role!=='owner')throw authError('ROLE_DENIED');
+      if(!/^[A-Za-z0-9_-]{1,128}$/.test(uid)||uid===session.uid)throw authError('INVALID_DEVICE');
+      await firestore(`users/${uid}`,{method:'PATCH',body:{fields:{role:{stringValue:'student'},active:{booleanValue:active===true},displayName:{stringValue:'Clinic entry device'}}}});
+    },
     async listClinicRecords(){
       if(!['owner','doctor','student'].includes(session?.role))throw authError('ROLE_DENIED');
       if(session.role==='student'){const records=[];for(const kind of ['intake','clinical']){const rows=await firestore('clinicRecords:runQuery',{method:'POST',body:{structuredQuery:{from:[{collectionId:'clinicRecords'}],where:{compositeFilter:{op:'AND',filters:[{fieldFilter:{field:{fieldPath:'createdBy'},op:'EQUAL',value:{stringValue:session.uid}}},{fieldFilter:{field:{fieldPath:'kind'},op:'EQUAL',value:{stringValue:kind}}}]}}}}});for(const row of rows)if(row.document){const doc=row.document;records.push({...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,fromValue(v)])),revision:doc.updateTime})}}return records;}

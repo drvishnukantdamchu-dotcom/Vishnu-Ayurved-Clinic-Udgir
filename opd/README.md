@@ -1,21 +1,8 @@
-# Vishnu Ayurved OPD demonstration PWA
+# Vishnu Ayurved clinic OPD PWA
 
-Public app: https://drvishnukantdamchu-dotcom.github.io/Vishnu-Ayurved-Clinic-Udgir/opd/
+Current release: v33. Owner/Doctor email login gates the clinic workspace. Email-free student device workflow is implemented but requires Firebase Anonymous provider and the new owner-controlled device rules. All six text record kinds can sync; report/X-ray blobs remain local. Existing demo data is separate. Local storage and JSON backups are unencrypted; protect clinic devices and backup files. Cross-device and live role validation remain required.
 
-**Synthetic demonstration data only. Do not enter real patient details or clinical documents.** IDs must start with `VAC-DEMO-`. The app is a prototype, not a deployable clinical record system or a reliable emergency-access service.
-
-## Current behavior
-
-- Firebase Email/Password login checks trusted `users/<Auth UID>` role documents; sessions live in memory for 15 minutes or until reload. `patientIntakes` has published Firestore permissions. `demoClinical` rules have been published and synthetic case sync was verified. The updated `demoPrescriptions` rules in `firestore.rules` must be published before remote prescription sync works. Student case drafts write only under their own UID; the client avoids a read-first check that the rules deny for absent student-owned drafts. Synthetic patient intakes sync across devices after login; prescriptions and other clinical collections remain denied by rules.
-- Panchakarma sessions and follow-up statuses and synthetic PDF/JPG/PNG attachments persist in **this browser's IndexedDB** across refreshes, under the `VAC-DEMO-*` namespace. Synthetic case-taking drafts sync to Firebase. Synthetic prescription drafts will sync only for owner/doctor after the prescription rules are published; the remaining local data does not sync to Firebase or Drive, and browser storage removal/private mode/device loss can erase them. Review queue remains session-only. Attachment max 5 MB, 20 files per demo patient.
-- Owner login can download a JSON backup of the browser-local synthetic records, including attachment bytes, and restore it manually from Settings. This is **not an automatic cloud backup**. The downloaded file is unencrypted: do not use it with patient records and store it privately. Restore replaces matching local entries, requires confirmation and reload, and does not restore Firestore intakes.
-- A4 case-paper print, search, sample reports and PWA installation work for demonstration. Reports do not count actual clinical visits. No pharmacy, billing, marketing, WhatsApp sending or Firebase Storage integrations.
-
-## Remaining production work
-
-Design and enforce collection-specific owner/doctor/student Firestore rules, server-side identity/approval workflows, immutable visit history and conflict resolution; extend remote clinical sync to remaining records, appointment and report queries, secure document storage and an encrypted, verified Drive backup bridge. Test role denial, revoke, restore, mobile use, A4 printing, cross-device synchronization and offline behavior before allowing real patients. Auth role screens alone do not secure data. Firebase web API keys are public identifiers; never ship service-account secrets.
-
-Run `node --test opd/*.test.mjs` from the repo root (or `node --test *.test.mjs` here).
+Run `node --test opd/*.test.mjs`.
 
 ## Report improvements (v21)
 
@@ -44,3 +31,6 @@ Version 30: personal offline clinic workspace with empty initial patient list, d
 Version 31: optional Owner/Doctor Firestore sync for all clinic text record kinds, with durable dirty markers, pagination, deletion tombstones and update-time conflict prevention. Publish the new full firestore.rules before live use. Attachments remain local; Firebase Storage requires Blaze. Shared browser local records are not isolated by login. No student cloud access. Live cloud validation still required.
 
 Version 32: doctor app is gated by Owner/Doctor authentication before loading local records. Dedicated student.html portal has per-UID local storage, only own intake/examination cloud queries and no prescription/review/backup controls. Student clinical writes require an existing intake owned by the student. Account creation and user role provisioning remain through trusted Firebase Console. Files stay local. Reopening app requires online sign-in; after sign-in local forms continue during connection loss.
+
+## Email-free student devices (v33)
+Enable Firebase Authentication Anonymous provider and publish `firestore.rules`. Open `student.html` on the clinic entry device; copy Device ID into Owner Settings > Student entry devices > Approve. Each student enters their name, which is self-declared attribution rather than verified identity. Changing student does not change device authorization. Revoking the ID blocks cloud access, but cannot remotely remove browser-local records. Use trusted clinic devices; clear browser data removes the device credential and local records, so back up/sync first. Anonymous refresh credentials persist in that browser; Owner/Doctor credentials remain in memory. First registration requires internet, later offline entry uses the same local device store. No attachments are uploaded. Device approval cannot change an existing Owner/Doctor role.

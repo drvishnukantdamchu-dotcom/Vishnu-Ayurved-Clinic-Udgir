@@ -1,6 +1,6 @@
-import {getAuthProvider} from './auth-context.mjs?v=32';
-import {syncRows,acceptCloud,allDemo} from './demo-store.mjs?v=32';
-import {syncClinic} from './clinic-sync.mjs?v=32';
+import {getAuthProvider} from './auth-context.mjs?v=33';
+import {syncRows,acceptCloud,allDemo} from './demo-store.mjs?v=33';
+import {syncClinic} from './clinic-sync.mjs?v=33';
 const section=document.createElement('section');section.className='panel';section.innerHTML='<h3>Firebase clinic sync</h3><p>Intake, examination, prescriptions, review notes, follow-ups and Panchakarma sync for Owner / Doctor. Files remain on this device. Local records are kept when a sync fails. Conflicting edits are never overwritten.</p><button id="clinic-sync" disabled>Sync clinic records</button><p id="clinic-cloud-status" role="status">Sign in through Settings to connect Firebase. New clinicRecords rules must be published.</p><button id="clinic-cloud-reload" hidden>Reload saved records</button>';
 document.getElementById('settings').prepend(section);
 const button=section.querySelector('#clinic-sync'),status=section.querySelector('#clinic-cloud-status'),reload=section.querySelector('#clinic-cloud-reload');let busy=false,again=false,epoch=0,timer;
@@ -15,3 +15,7 @@ async function sync(){if(busy){again=true;return}const auth=getAuthProvider(),us
 button.onclick=sync;reload.onclick=()=>location.reload();window.addEventListener('opd-auth-change',()=>{epoch++;button.disabled=!['owner','doctor'].includes(getAuthProvider()?.current()?.role);if(!button.disabled)sync()});
 window.addEventListener('opd-local-save',()=>{clearTimeout(timer);timer=setTimeout(()=>{if(getAuthProvider()?.current()&&navigator.onLine)sync()},1500)});
 window.addEventListener('online',()=>{if(getAuthProvider()?.current())sync()});
+
+const devicePanel=document.createElement('section');devicePanel.className='panel';devicePanel.innerHTML='<h3>Student entry devices</h3><p>Students need no email. On the clinic device open Student Entry and copy its Device ID here. Approve only devices you control. Revocation stops cloud access; existing local records remain on that device.</p><a href="student.html" target="_blank" rel="noopener">Open Student Entry</a><form><label>Device ID<input name="uid" required maxlength="128" pattern="[A-Za-z0-9_-]+"></label><button name="action" value="approve">Approve student device</button><button name="action" value="revoke">Revoke device</button></form><p role="status"></p>';
+document.getElementById('settings').append(devicePanel);
+devicePanel.querySelector('form').onsubmit=async e=>{e.preventDefault();const status=devicePanel.querySelector('[role=status]'),auth=getAuthProvider();if(auth?.current()?.role!=='owner'){status.textContent='Only the Owner can approve or revoke devices.';return}const uid=e.target.elements.uid.value.trim(),active=e.submitter.value==='approve';if(!confirm(`${active?'Approve':'Revoke'} student device ${uid}?`))return;try{await auth.setStudentDevice(uid,active);status.textContent=active?'Device approved. On the student page press Send to doctor.':'Device revoked.'}catch(error){status.textContent='Device update failed: '+String(error.code||error.message).replace(/[^A-Za-z0-9_]/g,'')}};
