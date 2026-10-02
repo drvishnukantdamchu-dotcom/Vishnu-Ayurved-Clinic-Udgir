@@ -1,5 +1,6 @@
 // Personal clinic records in a separate browser-local database. No cloud calls.
-const NAME='vac-opd-clinic-v1';
+let NAME='vac-opd-clinic-v1';
+export function useStudentStore(uid){if(!/^[A-Za-z0-9_-]{1,150}$/.test(uid))throw new Error('INVALID_USER');NAME='vac-opd-student-'+uid;}
 const KINDS=new Set(['review','intake','clinical','prescription','panchakarma','attachment','followup']);
 export function syntheticId(id){return /^VAC-OPD-[A-Za-z0-9_-]{1,140}$/.test(String(id||''))}
 

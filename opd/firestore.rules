@@ -3,6 +3,9 @@ service cloud.firestore {
  match /databases/{database}/documents {
   function signedIn(){return request.auth != null;}
   function clinician(){return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['owner','doctor'];}
+  function student(){return signedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';}
+  function ownIntake(d){return student() && d.createdBy == request.auth.uid && d.kind in ['intake','clinical'];}
+  function studentWrite(d){return ownIntake(d) && (d.kind == 'intake' || (exists(/databases/$(database)/documents/clinicRecords/$('intake_' + d.id)) && get(/databases/$(database)/documents/clinicRecords/$('intake_' + d.id)).data.createdBy == request.auth.uid));}
   function validRecord(d,recordId){
    return d.keys().hasAll(['id','kind','payload','deleted','createdBy','updatedBy','updatedAt'])
     && d.keys().hasOnly(['id','kind','payload','deleted','createdBy','updatedBy','updatedAt'])
@@ -14,9 +17,9 @@ service cloud.firestore {
     && d.updatedBy == request.auth.uid && d.updatedAt is string && d.updatedAt.size() <= 40;
   }
   match /clinicRecords/{recordId}{
-   allow get,list: if clinician();
-   allow create: if clinician() && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == request.auth.uid;
-   allow update: if clinician() && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == resource.data.createdBy;
+   allow get,list: if clinician() || ownIntake(resource.data);
+   allow create: if (clinician() || studentWrite(request.resource.data)) && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == request.auth.uid;
+   allow update: if (clinician() || (ownIntake(resource.data) && studentWrite(request.resource.data))) && validRecord(request.resource.data,recordId) && request.resource.data.createdBy == resource.data.createdBy;
    allow delete: if false;
   }
   match /users/{uid}{allow get: if signedIn() && request.auth.uid==uid; allow list,create,update,delete: if false;}

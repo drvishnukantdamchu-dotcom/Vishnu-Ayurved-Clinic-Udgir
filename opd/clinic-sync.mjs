@@ -1,9 +1,10 @@
 // Writes use Firestore update-time preconditions; conflicts never overwrite records.
 export async function syncClinic({auth,localRows,ack,isCurrent=()=>true}){
- const user=auth.current();if(!['owner','doctor'].includes(user?.role))throw new Error('ROLE_DENIED');
+ const user=auth.current();if(!['owner','doctor','student'].includes(user?.role))throw new Error('ROLE_DENIED');
  const remote=await auth.listClinicRecords();if(!isCurrent())throw new Error('SESSION_CHANGED');
  const cloud=new Map(remote.map(r=>[`${r.kind}:${r.id}`,r]));let uploaded=0,pulled=0;const conflicts=[],failures=[];
- for(const row of await localRows()){
+ for(const row of (await localRows()).sort((a,b)=>(a.kind==='intake'?0:1)-(b.kind==='intake'?0:1))){
+  if(user.role==='student'&&!['intake','clinical'].includes(row.kind))continue;
   if(!isCurrent())throw new Error('SESSION_CHANGED');
   const k=`${row.kind}:${row.id}`,existing=cloud.get(k);
   if(!row.dirty&&row.cloudRevision)continue;

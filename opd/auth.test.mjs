@@ -136,3 +136,11 @@ test('new clinic write must not overwrite an existing document',async()=>{
  await a.login('test@example.com','test');await a.saveClinicRecord({kind:'review',id:'VAC-OPD-20261002-x',value:{},updatedAt:'now'});
  assert.match(calls.at(-1).url,/currentDocument.exists=false/);
 });
+
+test('student clinic queries constrain author and kind and cannot save prescription',async()=>{
+ const calls=[],responses=[{localId:'student-uid',idToken:'token'},doc('student'),[],[]];
+ const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async(url,options)=>{calls.push({url,options});return {ok:true,json:async()=>responses.shift()}});
+ await a.login('student@example.com','test');await a.listClinicRecords();
+ for(const call of calls.slice(2)){const filters=JSON.parse(call.options.body).structuredQuery.where.compositeFilter.filters;assert.equal(filters[0].fieldFilter.value.stringValue,'student-uid');assert.ok(['intake','clinical'].includes(filters[1].fieldFilter.value.stringValue));}
+ await assert.rejects(a.saveClinicRecord({kind:'prescription',id:'VAC-OPD-20261002-x',value:{}}),e=>e.code==='ROLE_DENIED');assert.equal(calls.length,4);
+});

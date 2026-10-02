@@ -77,6 +77,7 @@ export function createAuth(config, request = fetch) {
   }
   function firestorePath(path) {
     const documents=`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(config.projectId)}/databases/(default)/documents`;
+    if(path==='clinicRecords:runQuery')return `${documents}:runQuery`;
     if(path==='clinicRecords')return `${documents}/clinicRecords`;
     if(/^clinicRecords\/(intake|clinical|prescription|panchakarma|followup|review)_VAC-OPD-[A-Za-z0-9_-]{1,140}$/.test(path))return `${documents}/${path}`;
     if(path==='patientIntakes:runQuery')return `${documents}:runQuery`;
@@ -115,13 +116,14 @@ export function createAuth(config, request = fetch) {
   return {
     configured,
     async listClinicRecords(){
-      if(!['owner','doctor'].includes(session?.role))throw authError('ROLE_DENIED');
+      if(!['owner','doctor','student'].includes(session?.role))throw authError('ROLE_DENIED');
+      if(session.role==='student'){const records=[];for(const kind of ['intake','clinical']){const rows=await firestore('clinicRecords:runQuery',{method:'POST',body:{structuredQuery:{from:[{collectionId:'clinicRecords'}],where:{compositeFilter:{op:'AND',filters:[{fieldFilter:{field:{fieldPath:'createdBy'},op:'EQUAL',value:{stringValue:session.uid}}},{fieldFilter:{field:{fieldPath:'kind'},op:'EQUAL',value:{stringValue:kind}}}]}}}}});for(const row of rows)if(row.document){const doc=row.document;records.push({...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,fromValue(v)])),revision:doc.updateTime})}}return records;}
       const records=[];let pageToken='';
       do{const page=await firestore('clinicRecords',{pageToken});for(const doc of page.documents||[])records.push({...Object.fromEntries(Object.entries(doc.fields||{}).map(([k,v])=>[k,fromValue(v)])),revision:doc.updateTime});pageToken=page.nextPageToken||'';}while(pageToken);
       return records;
     },
     async saveClinicRecord(row){
-      if(!['owner','doctor'].includes(session?.role))throw authError('ROLE_DENIED');
+      if(!['owner','doctor','student'].includes(session?.role)||session.role==='student'&&!['intake','clinical'].includes(row.kind))throw authError('ROLE_DENIED');
       if(!['intake','clinical','prescription','panchakarma','followup','review'].includes(row.kind)||!/^VAC-OPD-[A-Za-z0-9_-]{1,140}$/.test(row.id))throw authError('INVALID_RECORD');
       const payload=JSON.stringify(row.value??null);if(new TextEncoder().encode(payload).length>800000)throw authError('RECORD_TOO_LARGE');
       const data={id:row.id,kind:row.kind,payload,deleted:row.deleted===true,createdBy:row.cloudAuthor||session.uid,updatedBy:session.uid,updatedAt:row.updatedAt};
