@@ -119,5 +119,5 @@ test('login works without AbortSignal.timeout on older browsers',async()=>{
 test('transport failures do not reveal credentials or become permission errors',async()=>{
  const a=createAuth({enabled:true,apiKey:'test',projectId:'test'},async()=>{throw new TypeError('private transport details')});
  await assert.rejects(a.login('demo@example.com','secret'),e=>e.code==='NETWORK_ERROR'&&!String(e).includes('private'));
- assert.match(firebaseErrorMessage({code:'NETWORK_ERROR'}),/Rules बदलू नका/);
+ assert.match(firebaseErrorMessage({code:'NETWORK_ERROR'}),/Do not change Firestore Rules/);
 });

@@ -1,13 +1,13 @@
-import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=26';
-import {setAuthProvider} from './auth-context.mjs?v=26';
+import {createAuth, permissions, firebaseErrorMessage} from './auth.mjs?v=27';
+import {setAuthProvider} from './auth-context.mjs?v=27';
 const panel=document.createElement('section');
 panel.className='panel';
-panel.innerHTML=`<h2>लॉगिन जोडणी · टप्पा २</h2>
-<p id="auth-status" role="status">Firebase configuration तपासत आहे…</p>
-<form id="auth-form"><label for="auth-email">वापरकर्त्याचा ईमेल</label><input id="auth-email" type="email" autocomplete="username" required disabled>
-<label for="auth-password">पासवर्ड</label><input id="auth-password" type="password" autocomplete="current-password" required disabled>
-<div class="actions"><button id="auth-submit" type="submit" disabled>लॉगिन तपासा</button><button id="auth-out" type="button" hidden>लॉगआउट</button></div></form>
-<p id="auth-role"></p><p class="muted">काल्पनिक Intake आणि केस-टेकिंग login झाल्यावर Firebaseमध्ये sync करता येतात. प्रिस्क्रिप्शन फक्त Owner/Doctorसाठी आणि संबंधित Firestore नियम प्रकाशित असल्यासच sync होईल. पंचकर्म व फाइल्स या डिव्हाइसवरच राहतात. स्वतः नोंदणी करून Admin अधिकार मिळत नाहीत.</p>`;
+panel.innerHTML=`<h2>Account sign-in</h2>
+<p id="auth-status" role="status">Checking Firebase configuration…</p>
+<form id="auth-form"><label for="auth-email">Email address</label><input id="auth-email" type="email" autocomplete="username" required disabled>
+<label for="auth-password">Password</label><input id="auth-password" type="password" autocomplete="current-password" required disabled>
+<div class="actions"><button id="auth-submit" type="submit" disabled>Sign in</button><button id="auth-out" type="button" hidden>Sign out</button></div></form>
+<p id="auth-role"></p><p class="muted">Sample intake and examinations sync after sign-in. Prescription sync requires Owner / Doctor and published Firestore rules. Panchakarma and files remain local. Roles are assigned by the Owner through the Firebase console.</p>`;
 document.getElementById('settings').prepend(panel);
 const status=panel.querySelector('#auth-status'), form=panel.querySelector('form');
 const controls=[...form.querySelectorAll('input'),panel.querySelector('#auth-submit')];
@@ -18,19 +18,19 @@ try {
  const response=await fetch('./firebase-config.json',{cache:'no-store'});
  if(!response.ok)throw new Error('CONFIG');
  auth=createAuth(await response.json());
- reset(auth.configured?'Firebase तयार आहे. लॉगिननंतर काल्पनिक Intake व तपासणी sync करता येईल; प्रिस्क्रिप्शन फक्त Owner/Doctor साठी.':'Firebase project जोडलेला नाही. लॉगिन सध्या बंद आहे.');
-}catch{reset('Configuration उपलब्ध नाही. सुरक्षिततेसाठी लॉगिन बंद आहे.');}
+ reset(auth.configured?'Firebase configured. Sign in to sync sample intake and examinations. Prescriptions are restricted to Owner / Doctor.':'Firebase is not configured. Sign-in is disabled.');
+}catch{reset('Configuration unavailable. Sign-in is disabled.');}
 form.addEventListener('submit',async e=>{
- e.preventDefault();controls.forEach(c=>c.disabled=true);status.textContent='ओळख व परवानगी तपासत आहे…';
+ e.preventDefault();controls.forEach(c=>c.disabled=true);status.textContent='Checking identity and permissions…';
  try{
   const user=await auth.login(panel.querySelector('#auth-email').value,panel.querySelector('#auth-password').value);
   setAuthProvider(auth);window.dispatchEvent(new CustomEvent('opd-auth-change',{detail:user}));
   const p=permissions(user.role);
-  status.textContent='ओळख पडताळली. हा अजून demo workspace आहे.';
-  roleLabel.textContent=`भूमिका: ${user.role} · Clinical approval: ${p.approveClinical?'हो':'नाही'} · User management: ${p.manageUsers?'हो':'नाही'}`;
+  status.textContent='Identity verified. This is still a demo workspace.';
+  roleLabel.textContent=`Role: ${user.role} · Clinical approval: ${p.approveClinical?'Yes':'No'} · User management: ${p.manageUsers?'Yes':'No'}`;
   form.reset();out.hidden=false;
- }catch(error){reset('लॉगिन झाले नाही. '+firebaseErrorMessage(error));}
+ }catch(error){reset('Sign-in failed. '+firebaseErrorMessage(error));}
  finally{panel.querySelector('#auth-password').value='';}
 });
-out.onclick=()=>{reset('लॉगआउट झाले.');location.reload()};
-setInterval(()=>{if(!out.hidden&&!auth?.current()){reset('सत्र संपले. पुन्हा लॉगिन करा.');location.reload()}},15000);
+out.onclick=()=>{reset('Signed out.');location.reload()};
+setInterval(()=>{if(!out.hidden&&!auth?.current()){reset('Session expired. Sign in again.');location.reload()}},15000);

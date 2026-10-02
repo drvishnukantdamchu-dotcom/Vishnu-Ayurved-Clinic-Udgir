@@ -31,3 +31,6 @@ Updated PWA cache keys and corrected settings/intake copy to match the tested Fi
 New intakes require login and are written to IndexedDB before upload. Pending rows survive refresh and are retried on login, reconnect, or the sync button, using their original ID and submitting UID. Each cloud create uses an exists=false precondition; a previously saved record is read back instead of overwritten on a retry. Failed records remain pending and do not block subsequent rows. Logout/reload clears the in-memory workspace. Pending intakes are included in the manual JSON backup, which remains an unencrypted synthetic-data backup.
 
 This is still a synthetic-only prototype. This change does not complete prescription rule deployment, longitudinal visit history, attachments/Panchakarma cloud sync, or automated Drive backup. Automated tests cover retry failure, account isolation, session changes, and an existing remote record; live multi-device/offline validation remains required.
+
+
+Version 27: English interface, clinical labels, print text, validation and CSV headings. Existing visit-type and gender values remain compatible with Firestore. Original Marathi artwork and user-entered content are retained. Production clinical workflows and cloud validation remain incomplete.

@@ -17,20 +17,20 @@ export function permissions(role) {
 export function firebaseErrorMessage(error) {
   const code=String(error?.code||error?.message||'UNKNOWN_ERROR').replace(/[^A-Za-z0-9_]/g,'').toUpperCase();
   const messages={
-    INVALID_LOGIN_CREDENTIALS:'ईमेल/पासवर्ड जुळत नाहीत. Firebase Authentication मधील Email/Password provider सुरू आहे का ते तपासा.',
-    EMAIL_NOT_FOUND:'हा ईमेल Firebase Authentication Users मध्ये नाही.',
-    INVALID_PASSWORD:'पासवर्ड चुकीचा आहे.',
-    OPERATION_NOT_ALLOWED:'Firebase Authentication मध्ये Email/Password sign-in सुरू नाही.',
-    API_KEY_INVALID:'Firebase API key अवैध आहे; firebase-config.json मधील key तपासा.',
-    INVALID_API_KEY:'Firebase API key अवैध आहे; firebase-config.json मधील key तपासा.',
-    PERMISSION_DENIED:'Firestore Rules ने विनंती नाकारली. UID, users/{UID} भूमिका आणि संबंधित collection rule तपासा.',
-    ACCESS_DENIED:'users/{Auth UID} documentमध्ये active=true आणि मान्य role (owner/doctor/student) तपासा.',
-    NOT_FOUND:'Firestore document/collection path सापडला नाही. loginवेळी users/{Auth UID} document तपासा.',
-    RESOURCE_EXHAUSTED:'Firebase quota किंवा rate limit गाठली आहे.',
-    NETWORK_ERROR:'Firebaseशी जोडणी झाली नाही. इंटरनेट, VPN/ad-blocker किंवा नेटवर्कमधील Google API निर्बंध तपासा; Firestore Rules बदलू नका.',
-    REQUEST_TIMEOUT:'Firebaseकडून १५ सेकंदांत प्रतिसाद आला नाही. जोडणी तपासून पुन्हा प्रयत्न करा.',
-    SESSION_EXPIRED:'Firebase सत्र संपले. पुन्हा login करा.',
-    NOT_CONFIGURED:'Firebase config उपलब्ध नाही किंवा disabled आहे.'
+    INVALID_LOGIN_CREDENTIALS:'Email or password does not match. Check the Email/Password provider in Firebase Authentication.',
+    EMAIL_NOT_FOUND:'Firestore document not found. Check users/{Auth UID} during sign-in.',
+    INVALID_PASSWORD:'Incorrect password.',
+    OPERATION_NOT_ALLOWED:'Email/Password sign-in is disabled in Firebase Authentication.',
+    API_KEY_INVALID:'Invalid Firebase API key. Check firebase-config.json.',
+    INVALID_API_KEY:'Invalid Firebase API key. Check firebase-config.json.',
+    PERMISSION_DENIED:'Firestore Rules denied the request. Check UID, users/{UID} role and the collection rule.',
+    ACCESS_DENIED:'Check users/{Auth UID}: active=true and role=owner, doctor or student.',
+    NOT_FOUND:'Firestore document not found. Check users/{Auth UID} during sign-in.',
+    RESOURCE_EXHAUSTED:'Firebase quota or rate limit reached.',
+    NETWORK_ERROR:'Cannot connect to Firebase. Check internet, VPN, ad blockers or Google API network restrictions. Do not change Firestore Rules.',
+    REQUEST_TIMEOUT:'Firebase did not respond within 15 seconds. Check connectivity and try again.',
+    SESSION_EXPIRED:'Session expired. Sign in again.',
+    NOT_CONFIGURED:'Firebase configuration is unavailable or disabled.'
   };
   if(messages[code])return `${messages[code]} [${code}]`;
   if(code.startsWith('HTTP_403'))return `${messages.PERMISSION_DENIED} [${code}]`;
